@@ -1,0 +1,52 @@
+Number:
+The number type represents both integer and floating point numbers.
+Besides regular numbers, there are so-called “special numeric values” which also belong to this data type: Infinity, -Infinity and NaN.
+
+NaN represents a computational error. It is a result of an incorrect or an undefined mathematical operation, for instance:
+alert( "not a number" / 2 );
+
+NaN is sticky. Any further mathematical operation on NaN returns NaN:
+alert( NaN + 1 ); // NaN
+alert( "not a number" / 2 - 1 ); // NaN
+So, if there’s a NaN somewhere in a mathematical expression, it propagates to the whole result
+
+
+BigInt:
+In JavaScript, the “number” type cannot safely represent integer values larger than (253-1) (that’s 9007199254740991), or less than -(253-1) for negatives.
+JS can store numbers beyond +(2^53-1), but wihtout full precesion.
+Precision means how exactly a number is stored — especially the exact digits of an integer or a decimal.
+If you go beyond that, JavaScript might round the number or store the wrong value because it can't represent
+
+console.log(9007199254740991 + 1); // 9007199254740992
+console.log(9007199254740991 + 2); // 9007199254740992
+
+A BigInt value is created by appending n to the end of an integer:
+const bigInt = 1234567890123456789012345678901234567890n;
+
+
+null:
+In JavaScript, null is not a “reference to a non-existing object” or a “null pointer” like in some other languages.
+It’s just a special value which represents “nothing”, “empty” or “value unknown”.
+
+
+undefined:
+The meaning of undefined is “value is not assigned”.
+
+If a variable is declared, but not assigned, then its value is undefined:
+let age;
+alert(age); // shows "undefined"
+
+Technically, it is possible to explicitly assign undefined to a variable:
+let age = 100;
+age = undefined;
+alert(age); // "undefined"
+But we don’t recommend doing that. Normally, one uses null to assign an “empty” or “unknown” value to a variable, while undefined is reserved as a default initial value for unassigned things.
+
+
+
+typeof operator:
+typeof null // "object" 
+That’s an officially recognized error in typeof, coming from very early days of JavaScript and kept for compatibility. Definitely, null is not an object. 
+It is a special value with a separate type of its own. The behavior of typeof is wrong here.
+typeof alert // "function"  because alert is a function.
+typeof x same as typeof(x). typeof x syntax is much more common.

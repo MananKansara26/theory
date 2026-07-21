@@ -1,0 +1,338 @@
+user["likes birds"] = true;
+let key = "likes birds";
+user[key] = true;
+let fruit = prompt("Which fruit to buy?", "apple");
+let bag = {
+  [fruit]: 5, // the name of the property is taken from the variable fruit
+};
+there are no limitations on object property names. They can be any strings or symbols (a special type for identifiers, to be covered later). Other types are automatically converted to strings.
+let obj = {
+  0: "test" // same as "0": "test"
+};
+alert( obj["0"] ); // test
+alert( obj[0] ); // test (same property)
+There’s a minor gotcha with a special property named __proto__. We can’t set it to a non-object value:
+let obj = {};
+obj.__proto__ = 5; // assign a number
+alert(obj.__proto__); // [object Object] - the value is an object, didn't work as intended
+Reading a non-existing property just returns undefined.
+
+"key" in object
+const obj = { a: 10 }; "c" in obj => false, "a" in obj => true
+let key = "a"; key in obj => true
+why we need in operator?
+let obj = {
+  test: undefined
+};
+alert( obj.test ); // it's undefined, so - no such property?
+alert( "test" in obj ); // true, the property does exist!
+
+Ordering the object properties: integer properties are sorted, others appear in creation order. The details follow.
+const obj = { 1: "a", 2: "b", 7: "c", 4: "d", "x": "e", 5:"f"} => {1: 'a', 2: 'b', 4: 'd', 5: 'f', 7: 'c', x: 'e'}
+The “integer property” term here means a string that can be converted to-and-from an integer without a change. But "+49" and "1.2" are not:
+
+let a = {};
+let b = a; // copy the reference
+alert( a == b ); // true, both variables reference the same object
+alert( a === b ); // true
+let a = {};
+let b = {}; // two independent objects
+alert( a == b ); // false
+
+
+Object.assign(dest, ...sources)
+
+let user = { name: "John" };
+let permissions1 = { canView: true };
+let permissions2 = { canEdit: true };
+Object.assign(user, permissions1, permissions2);
+// now user = { name: "John", canView: true, canEdit: true }
+
+let user = { name: "John" }; // If the copied property name already exists, it gets overwritten:
+Object.assign(user, { name: "Pete" });
+alert(user.name); // now user = { name: "Pete" }
+
+We also can use Object.assign to perform a simple object cloning: let clone = Object.assign({}, user);
+
+Problem : 
+let user = {
+  name: "John",
+  sizes: {
+    height: 182,
+    width: 50
+  }
+};
+let clone = Object.assign({}, user);
+alert( user.sizes === clone.sizes ); // true, same object
+
+structuredClone(object) : clones the object with all nested properties. used for  “deep cloning”
+let user = {
+  name: "John",
+  sizes: {
+    height: 182,
+    width: 50
+  }
+};
+let clone = structuredClone(user);
+alert( user.sizes === clone.sizes );
+Although, there are cases when structuredClone fails.like Function properties aren’t supported.
+use lodash methods in order to do that
+
+
+There’s a background process in the JavaScript engine that is called garbage collector. It monitors all objects and removes those that have become unreachable.
+// user has a reference to the object
+let user = {
+  name: "John"
+};
+user = null;
+Now John becomes unreachable. There’s no way to access it, no references to it. Garbage collector will junk the data and free the memory.
+// user has a reference to the object
+let user = {
+  name: "John"
+};
+let admin = user;
+user = null;
+Then the object is still reachable via admin global variable, so it must stay in memory. If we overwrite admin too, then it can be removed.
+
+The basic garbage collection algorithm is called “mark-and-sweep”. 
+garbage collector takes root and start marking all references by visiting them in a nested way. objects which are not marked are removed
+but morden js uses advance techniques
+
+
+method shorthand:
+user = {
+  sayHi: function() {
+    alert("Hello");
+  }
+};
+user = {
+  sayHi() { // shorthand. same as "sayHi: function(){...}"
+    alert("Hello");
+  }
+};
+
+“this” in methods: To access the object, a method can use the this keyword.
+let user = {
+  name: "John",
+  age: 30,
+  sayHi() {
+    // "this" is the "current object"
+    alert(this.name);
+  }
+};
+user.sayHi(); // John
+let user = {
+  name: "John",
+  age: 30,
+
+  sayHi() {
+    alert(user.name); // "user" instead of "this"
+  }
+
+};
+But such code is unreliable. If we decide to copy user to another variable, e.g. admin = user and overwrite user with something else, then it will access the wrong object.
+It can be used in any function, even if it’s not a method of an object.
+let user = { name: "John" };
+let admin = { name: "Admin" };
+function sayHi() {
+  alert( this.name );
+}
+// use the same function in two objects
+user.f = sayHi;
+admin.f = sayHi;
+// these calls have different this
+// "this" inside the function is the object "before the dot"
+user.f(); // John  (this == user)
+admin.f(); // Admin  (this == admin)
+Calling without an object: this == undefined
+function sayHi() {
+  alert(this);
+}
+sayHi(); // undefined
+
+Arrow functions are special: they don’t have their “own” this. If we reference this from such a function, it’s taken from the outer “normal” function.
+let user = {
+  firstName: "Ilya",
+  sayHi() {
+    let arrow = () => alert(this.firstName);
+    arrow();
+  }
+};
+user.sayHi(); // Ilya
+
+Constructor function: technically are regular functions. There are two conventions though:
+They are named with capital letter first.
+They should be executed only with "new" operator.
+
+When a function is executed with new, it does the following steps:
+1. A new empty object is created and assigned to this.
+2. The function body executes. Usually it modifies this, adds new properties to it.
+3. The value of this is returned.
+
+function User(name) {
+  this.name = name;
+  this.isAdmin = false;
+}
+let user = new User("Jack");
+alert(user.name); // Jack
+alert(user.isAdmin); // false
+
+In other words, new User(...) does something like:
+function User(name) {
+  // this = {};  (implicitly)
+  // add properties to this
+  this.name = name;
+  this.isAdmin = false;
+  // return this;  (implicitly)
+}
+
+// create a function and immediately call it with new
+let user = new function() {
+  this.name = "John";
+  this.isAdmin = false;
+
+  // ...other code for user creation
+  // maybe complex logic and statements
+  // local variables etc
+};
+This constructor can’t be called again, because it is not saved anywhere, just created and called.
+
+Constructor mode test: new.target
+It is undefined for regular calls and equals the function if called with new:
+function User() {
+  alert(new.target);
+}
+// without "new":
+User(); // undefined
+// with "new":
+new User(); // function User { ... }
+
+Return from constructors
+Usually, constructors do not have a return statement. Their task is to write all necessary stuff into this, and it automatically becomes the result.
+But if there is a return statement, then the rule is simple:
+If return is called with an object, then the object is returned instead of this.
+If return is called with a primitive, it’s ignored.
+function BigUser() {
+  this.name = "John";
+  return { name: "Godzilla" };  // <-- returns this object
+}
+alert( new BigUser().name );  // Godzilla, got that object
+
+The optional chaining ?. stops the evaluation if the value before ?. is undefined or null and returns undefined.
+Other variants: ?.(), ?.[]
+obj?.[prop] – returns obj[prop] if obj exists, otherwise undefined.
+obj.method?.() – calls obj.method() if obj.method exists, otherwise returns undefined
+
+Symbol type : A “symbol” represents a unique identifier.
+only two primitive types may serve as object property keys: string type, or   symbol type.
+let id = Symbol("id"); // id is just a description(label). and creating the two symbols with same label will not make them identical
+console.log(id.description); // id
+alert(id); // TypeError: Cannot convert a Symbol value to a string
+let id1 = Symbol("id");
+let id2 = Symbol("id");
+alert(id1 == id2); // false
+Sometimes different libraries or developers accidentally use the same property name.This is called a property name collision. Symbol solves this problem. Every symbol is guaranteed to be unique.
+problem ex:
+const user = {
+  name: "Manan"
+};
+// Library A
+user.id = 101;
+// Library B
+user.id = "ABC123"
+console.log(user.id);
+Library B accidentally overwrote Library A's property.
+Symbolic properties do not participate in for..in loop. Object.keys(user) also ignores them. T
+In contrast, Object.assign copies both string and symbol properties:
+
+Global symbols: 
+Symbols inside the registry are called global symbols. If we want an application-wide symbol, accessible everywhere in the code – that’s what they are for.
+let id = Symbol.for("id"); // if the symbol did not exist, it is created
+// read it again (maybe from another part of the code)
+let idAgain = Symbol.for("id");
+// the same symbol
+alert( id === idAgain ); // true
+// get symbol by name
+let sym = Symbol.for("name");
+alert( Symbol.keyFor(sym) ); // name
+let localSymbol = Symbol("name");
+alert( Symbol.keyFor(localSymbol) ); // undefined, not global
+most application developers rarely use global symbols. They are mainly useful for libraries, frameworks, plugins, and large applications where different modules need to agree on the same hidden property.
+// plugin A
+const CONFIG = Symbol.for("myApp.config");
+app[CONFIG] = {
+    apiUrl: "https://api.example.com"
+};
+// plugin B
+const CONFIG = Symbol.for("myApp.config");
+console.log(app[CONFIG].apiUrl);
+
+Object to primitive conversion
+That’s an important limitation: the result of obj1 + obj2 (or another math operation) can’t be another object!
+
+Object Conversion rules:
+There’s no conversion to boolean. All objects are true in a boolean context, as simple as that. There exist only numeric and string conversions.
+The numeric conversion happens when we subtract objects or apply mathematical functions. For instance, Date objects (to be covered in the chapter Date and time) can be subtracted, and the result of date1 - date2 is the time difference between two dates.
+As for the string conversion – it usually happens when we output an object with alert(obj) and in similar contexts.
+
+How does JavaScript decide which conversion to apply?
+1. string: obj to string conversion
+alert(obj); 
+anotherObj[obj] = 123;
+2. number : obj to number conversion
+let num = Number(obj); // explicit conversion
+let delta = date1 - date2;
+let greater = user1 > user2;
+3. default : Occurs in rare cases when the operator is “not sure” what type to expect.
+For instance, binary plus + can work both with strings (concatenates them) and numbers (adds them). So if a binary plus gets an object as an argument, it uses the "default" hint to convert it.
+// binary plus uses the "default" hint
+let total = obj1 + obj2;
+Also, if an object is compared using == with a string, number or a symbol, it’s also unclear which conversion should be done, so the "default" hint is used.
+// obj == number uses the "default" hint
+if (user == 1) { ... };'
+
+
+All built-in objects except for one case (Date object, we’ll learn it later) implement "default" conversion the same way as "number". And we probably should do the same.
+To do the conversion, JavaScript tries to find and call three object methods:
+1. Call obj[Symbol.toPrimitive](hint) – the method with the symbolic key Symbol.toPrimitive (system symbol), if such method exists,
+2. Otherwise if hint is "string"
+try calling obj.toString() if not found then call obj.valueOf()
+3. Otherwise if hint is "number" or "default"
+try calling obj.valueOf() if not found then call .toString()
+
+The only mandatory thing: these methods must return a primitive, not an object.
+
+const obj = {
+  a: 10,
+  [Symbol.toPrimitive](hint) {
+    console.log("hint", hint);
+    if (hint === "number") return 10;
+    else if (hint === "string") return "Hi";
+    else return 50
+  } 
+}
+console.log(+obj); // try to convert number
+console.log(5+obj); // try to convert default
+console.log(String(obj)); // try to convert string
+hint number
+10
+hint default
+55
+hint string
+Hi
+
+let user = {
+  name: "John",
+  money: 1000,
+  // for hint="string"
+  toString() {
+    return `{name: "${this.name}"}`;
+  },
+  // for hint="number" or "default"
+  valueOf() {
+    return this.money;
+  }
+};
+alert(user); // toString -> {name: "John"}
+alert(+user); // valueOf -> 1000
+alert(user + 500); // valueOf -> 1500

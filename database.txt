@@ -1,0 +1,9 @@
+ACID Properties in Database:
+ACID is a set of properties that guarantees reliable and consistent transactions in a database.
+A → Atomicity : A transaction is treated as a single unit. Either all operations succeed, or all operations fail.
+C → Consistency : A transaction must move the database from one valid state to another valid state.
+I → Isolation : Multiple transactions running at the same time should not interfere with each other.
+D → Durability : Once a transaction is committed, the data is permanently saved.
+
+Connection Pooling:
+Connection pooling is a mechanism where an application maintains a set of reusable database connections. Instead of creating a new connection for every request, requests borrow an existing connection from the pool, execute queries, and return it back. It improves performance, reduces connection overhead, and prevents the database from being overloaded with too many connections.

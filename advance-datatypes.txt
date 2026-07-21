@@ -1,0 +1,507 @@
+object wrapper is a temporary object that JavaScript creates around a primitive value so you can use methods and properties on that primitive.
+The “object wrappers” are different for each primitive type and are called: String, Number, Boolean, Symbol and BigInt. Thus, they provide different sets of methods.
+
+let str = "Hello";
+alert( str.toUpperCase() ); // HELLO
+Here’s what actually happens in str.toUpperCase():
+1.The string str is a primitive. So in the moment of accessing its property, a special object is created that knows the value of the string, and has useful methods, like toUpperCase().
+2.That method runs and returns a new string (shown by alert).
+3.The special object is destroyed, leaving the primitive str alone.
+
+Constructors String/Number/Boolean are for internal use only
+alert( typeof 0 ); // "number"
+alert( typeof new Number(0) ); // "object"!
+
+null/undefined have no methods
+
+
+Number:
+A number is represented in 64-bit format : 52 bits to store digits + 11 bits to store position of decimal point + 1 bit for the sign
+If a number is really huge, it may overflow the 64-bit storage and become a special numeric value Infinity: alert( 1e500 ); // Infinity
+
+let billion = 1000000000;
+let billion = 1_000_000_000; // for better readability
+let a = 1_1; 
+
+let billion = 1e9;  // 1 billion, literally: 1 and 9 zeroes
+alert( 7.3e9 );  // 7.3 billions (same as 7300000000 or 7_300_000_000)
+1e3 === 1 * 1000; // e3 means *1000
+let mcs = 1e-6; // five zeroes to the left from 1
+1e-3 === 1 / 1000; // 0.001
+
+toString(base)
+let num = 255;
+alert( num.toString(16) );  // ff
+alert( num.toString(2) );   // 11111111
+
+0.1 + 0.2 == 0.3 // false
+A number is stored in memory in its binary form, a sequence of bits – ones and zeroes. But fractions like 0.1, 0.2 that look simple in the decimal numeric system are actually unending fractions in their binary form.
+alert(0.1.toString(2)); // 0.0001100110011001100110011001100110011001100110011001101
+alert(0.2.toString(2)); // 0.001100110011001100110011001100110011001100110011001101
+alert((0.1 + 0.2).toString(2)); // 0.0100110011001100110011001100110011001100110011001101
+
+let sum = 0.1 + 0.2;
+sum.toFixed(2) // "0.30" => toFixed always returns a string.
+
+alert( isFinite("15") ); // true
+alert( isFinite("str") ); // false, because a special value: NaN. Sometimes isFinite is used to validate whether a string value is a regular
+alert( isFinite(Infinity) ); // false, because a special value: Infinity
+
+parseInt & parseFloat :
+They “read” a number from a string until they can’t. In case of an error, the gathered number is returned. The function parseInt returns an integer, whilst parseFloat will return a floating-point number.
+parseInt('100px') // 100
+parseFloat('12.5em') // 12.5
+parseInt('12.3') // 12, only the integer part is returned
+parseFloat('12.3.4') // 12.3, the second point stops the reading
+There are situations when parseInt/parseFloat will return NaN. It happens when no digits could be read: parseInt('a123')
+
+
+String:
+The internal format for strings is always UTF-16, it is not tied to the page encoding.
+`My\n`.length // 3. \n is a single “special” character, so the length is indeed 3.
+
+let str = `Hello`;
+alert( str[0] ); // H
+alert( str.at(0) ); // H
+at accepts negative character and return the nth value from last. while [] doesnt. it will return undefined
+alert( str[-2] ); // undefined
+alert( str.at(-2) ); // l
+
+Strings are immutable
+let str = 'Hi';
+str[0] = 'h'; // error
+
+str.indexOf: It looks for the substr in str, starting from the given position pos, and returns the position where the match was found or -1 if nothing can be found.
+let str = 'Widget with id';
+alert( str.indexOf('Widget') ); // 0, because 'Widget' is found at the beginning
+alert( str.indexOf('widget') ); // -1, not found, the search is case-sensitive
+alert( str.indexOf('id', 2) ) // 12
+str.lastIndexOf(substr, position):  that searches from the end of a string to its beginning.
+
+str.includes(substr, pos) : returns true/false depending on whether str contains substr within
+alert( "Widget".includes("id") ); // true
+alert( "Widget".includes("id", 3) ); // false, from position 3 there is no "id"
+alert( "Widget".startsWith("Wid") ); // true, "Widget" starts with "Wid"
+alert( "Widget".endsWith("get") ); // true, "Widget" ends with "get"
+
+Getting a substring: slice, substring, substr
+=> str.slice(start [, end]): Returns the part of the string from start to (but not including) end.
+let str = "stringify";
+alert( str.slice(0, 1) ); // 's', from 0 to 1, but not including 1, so only character at 0
+alert( str.slice(2) ); // 'ringify', from the 2nd position till the end
+NEGATIVE values for start/end are also possible. They mean the position is counted from the string end:
+// start at the 4th position from the right, end at the 1st from the right
+alert( str.slice(-4, -1) ); // 'gif'
+
+=> str.substring(start [, end]) : Returns the part of the string between start and end (not including end).
+This is almost the same as slice, but it allows start to be greater than end. Negative arguments are (unlike slice) not supported, they are treated as 0.
+let str = "stringify";
+alert( str.substring(2, 6) ); // "ring"
+alert( str.substring(6, 2) ); // "ring
+a.substring(-3); // "stringify"
+a.substring(-3, -4); // ""
+
+=> str.substr(start [, length]): Returns the part of the string from start, with the given length.
+allows negative start
+let str = "stringify";
+alert( str.substr(2, 4) )
+alert( str.substr(-4, 2) ); // 'gi', from the 4th position get 2 characters
+
+strings in Javascript are encoded using UTF-16. That is: each character has a corresponding numeric code.
+str.codePointAt(pos): Returns a decimal number representing the code for the character at position pos. "Z".codePointAt(0) // 90
+String.fromCodePoint(code): Creates a character by its numeric code
+alert( String.fromCodePoint(90) ); // Z
+alert( String.fromCodePoint(0x5a) ); // Z (we can also use a hex value as an argument)
+
+
+Arrays:
+Array is an object and thus behaves like an object.
+like string can also use the method .at(). ex to get last element of the array => arr.at(-1)
+
+let fruits = []; // make an array
+fruits[99999] = 5; // assign a property with the index far greater than its length
+fruits.age = 25; // create a property with an arbitrary name
+That’s possible, because arrays are objects at their base. We can add any properties to them.
+But the engine will see that we’re working with the array as with a regular object. Array-specific optimizations are not suited for such cases and will be turned off, their benefits disappear.
+
+length property automatically updates when we modify the array. it is actually not the count of values in the array, but the greatest numeric index plus one
+let fruits = [];
+fruits[123] = "Apple";
+alert( fruits.length ); // 124
+Another interesting thing about the length property is that it’s writable.
+If we increase it manually, nothing interesting happens. But if we decrease it, the array is truncated. The process is irreversible, here’s the example:
+let arr = [1, 2, 3, 4, 5];
+arr.length = 2; // truncate to 2 elements
+alert( arr ); // [1, 2]
+arr.length = 5; // return length back
+alert( arr[3] ); // undefined: the values do not return
+
+toString: Arrays have their own implementation of toString method that returns a comma-separated list of elements.
+let arr = [1, 2, 3];
+alert( arr ); // 1,2,3
+alert( [] + 1 ); // "1"
+alert( [1] + 1 ); // "11"
+
+arr.splice(start[, deleteCount, elem1, ..., elemN]): It modifies arr starting from the index start: removes deleteCount elements and then inserts elem1, ..., elemN at their place. Returns the array of removed elements.
+let arr = ["I", "study", "JavaScript", "right", "now"];
+// remove 3 first elements and add two new elements
+const output = arr.splice(0, 3, "Let's", "dance");
+console.log(output); // [ 'I', 'study', 'JavaScript' ]
+console.log(arr); // [ "Let's", 'dance', 'right', 'now' ]
+["I", "study", "JavaScript"].splice(2, 0, "complex", "language"); // "I", "study", "complex", "language", "JavaScript"
+Negative indexes allowed
+
+slice is also used in array
+arr.concat(arg1, arg2...): It accepts any number of arguments – either arrays or values.
+let arr = [1, 2];
+alert( arr.concat([3, 4]) ); // 1,2,3,4
+alert( arr.concat([3, 4], [5, 6]) ); // 1,2,3,4,5,6
+
+indexOf/lastIndexOf and includes : also works in array like string
+const arr = [NaN];
+alert( arr.indexOf(NaN) ); // -1 (wrong, should be 0)
+alert( arr.includes(NaN) );// true (correct)
+
+find and findIndex/findLastIndex:
+let result = arr.find(function(item, index, array) {
+  // if true is returned, item is returned and iteration is stopped
+  // for falsy scenario returns undefined
+});
+findIndex/findLastIndex returns the index instead but syntax is same
+
+sort(): The items are sorted as strings by default., all elements are converted to strings for comparisons. For strings, lexicographic ordering is applied and indeed "2" > "15".
+To use our own sorting order, we need to supply a function as the argument of arr.sort().
+array.sort((a, b) => { // to sort the number in ac
+    // return something
+});
+How Compare Function Works:
+JavaScript repeatedly picks two elements from the array:
+1. Return Negative Number (< 0) : Keep a before b.
+2. Return Positive Number (> 0) : Put b before a.
+3. Return 0 : They are equal.
+The ECMAScript specification does NOT define which sorting algorithm JavaScript engines must use. It only defines how the compare function should behave. The algorithm is implementation-dependent.
+The compare function is not called sequentially like a for loop. Instead, the sorting algorithm decides which two elements need to be compared next.
+In Node.js (V8), .sort() is implemented using a stable Timsort-based algorithm. but may very on runtime engine used by the nodejs
+example:
+function shuffle(array) {
+  array.sort(() => Math.random() - 0.5);
+}
+let arr = [1, 2, 3];
+shuffle(arr);
+alert(arr);
+
+Reduce: 
+let value = arr.reduce(function(accumulator, item, index, array) {
+  // ...
+}, [initial]);
+accumulator – is the result of the previous function call, equals initial the first time (if initial is provided).
+if there’s no initial, then reduce takes the first element of the array as the initial value and starts the iteration from the 2nd element.
+let arr = [];
+// Error: Reduce of empty array with no initial value
+// if the initial value existed, reduce would return it for the empty arr.
+arr.reduce((sum, current) => sum + current);
+So it’s advised to always specify the initial value.
+The method arr.reduceRight does the same but goes from right to left.
+
+Array.isArray: 
+alert(typeof {}); // object
+alert(typeof []); // object (same)
+alert(Array.isArray({})); // false
+alert(Array.isArray([])); // true
+
+Almost all array methods that call functions – like find, filter, map, with a notable exception of sort, accept an optional additional parameter thisArg.
+arr.find(func, thisArg);
+arr.filter(func, thisArg);
+arr.map(func, thisArg)
+let army = {
+  minAge: 18,
+  maxAge: 27,
+  canJoin(user) {
+    return user.age >= this.minAge && user.age < this.maxAge;
+  }
+};
+let users = [
+  {age: 16},
+  {age: 20},
+  {age: 23},
+  {age: 30}
+];
+// find users, for who army.canJoin returns true
+let soldiers = users.filter(army.canJoin, army);
+alert(soldiers.length); // 2
+
+arr.flat(depth): is used to flatten nested arrays into a single array. It creates a new array and does not modify the original array.
+Default (depth = 1)
+const arr = [1, 2, [3, 4], 5];
+const result = arr.flat(); // [1, 2, 3, 4, 5]
+const arr = [1, [2, [3, [4, [5]]]]];
+console.log(arr.flat(Infinity)); // [1, 2, 3, 4, 5]
+
+arr.flatMap(fn) : didnt get idea
+
+
+Iterables:
+Iterable objects are a generalization of arrays. That’s a concept that allows us to make any object useable in a for..of loop.
+Of course, Arrays are iterable. But there are many other built-in objects, that are iterable as well. For instance, strings are also iterable.
+If an object isn’t technically an array, but represents a collection (list, set) of something, then for..of is a great syntax to loop over it, so let’s see how to make it work.
+
+let range = {
+  from: 1,
+  to: 5
+};
+// We want the for..of to work:
+// for(let num of range) ... num=1,2,3,4,5
+To make the range object iterable (and thus let for..of work) we need to add a method to the object named Symbol.iterator (a special built-in symbol just for that).
+1.When for..of starts, it calls [Symbol.iterator] (method name must be same as object name) method once (or errors if not found). The method must return an iterator – an object with the method next.
+2.Onward, for..of works only with that returned object.
+3.When for..of wants the next value, it calls next() on that object.
+4.The result of next() must have the form {done: Boolean, value: any}, where done=true means that the loop is finished, otherwise value is the next value.
+const greetings = {
+  persons: ["a", "b", "c"],
+  greeting: "Hi"
+}
+greetings[Symbol.iterator] = function() {
+  return {
+    persons: this.persons,
+    greeting: this.greeting,
+    next() {
+      if (this.persons.length) {
+        const person = this.persons.shift();
+        return { done: false, value: `${this.greeting} ${person}` }
+      } else {
+        return { done: true }
+      }
+    }
+  }
+}
+for (let greeting of greetings) {
+  console.log(greeting);  
+}
+
+Two official terms look similar, but are very different. Please make sure you understand them well to avoid the confusion.
+1.Iterables are objects that implement the Symbol.iterator method, as described above.
+2.Array-likes are objects that have indexes and length, so they look like arrays.
+
+Array.from: that takes an iterable or array-like value and makes a “real” Array from it.
+An array-like object is not iterable necessarily,but it has: length and numeric indexes.
+const obj = {
+    0: "A",
+    1: "B",
+    2: "C",
+    length: 3
+};
+console.log(Array.from(obj));
+
+
+Map:
+Map is a collection of keyed data items, just like an Object. But the main difference is that Map allows keys of any type. Map can also use objects as keys.
+Methods and properties are:
+new Map() – creates the map.
+map.set(key, value) – stores the value by the key.
+map.get(key) – returns the value by the key, undefined if key doesn’t exist in map.
+map.has(key) – returns true if the key exists, false otherwise.
+map.delete(key) – removes the element (the key/value pair) by the key.
+map.clear() – removes everything from the map.
+map.size – returns the current element count.
+
+let map = new Map();
+
+map.set('1', 'str1');   // a string key
+map.set(1, 'num1');     // a numeric key
+map.set(true, 'bool1'); // a boolean key
+alert( map.get(1)   ); // 'num1'
+alert( map.get('1') ); // 'str1'
+alert( map.size ); // 3
+
+map.set('1', 'str1').set(1, 'num1').set(true, 'bool1'); // map.set call returns the map itself, so we can “chain” the calls:
+
+For looping over a map, there are 3 methods: these methods returns the iterator not the actual array
+map.keys() – returns an iterable for keys,
+map.values() – returns an iterable for values,
+map.entries() – returns an iterable for entries [key, value], it’s used by default in for..of.
+
+Object to Map conversion:
+When a Map is created, we can pass an array (or another iterable) with key/value pairs for initialization
+let map = new Map([
+  ['1',  'str1'],
+  [1,    'num1'],
+  [true, 'bool1']
+]);
+alert( map.get('1') ); // str1
+If we have a plain object, and we’d like to create a Map from it, then we can use built-in method Object.entries(obj) that returns an array of key/value pairs for an object exactly in that format.
+let obj = {
+  name: "John",
+  age: 30
+};
+let map = new Map(Object.entries(obj));
+alert( map.get('name') ); // John
+
+Set
+A Set is a special type collection – “set of values” (without keys), where each value may occur only once.
+Its main methods are:
+new Set([iterable]) – creates the set, and if an iterable object is provided (usually an array), copies values from it into the set.
+set.add(value) – adds a value, returns the set itself.
+set.delete(value) – removes the value, returns true if value existed at the moment of the call, otherwise false.
+set.has(value) – returns true if the value exists in the set, otherwise false.
+set.clear() – removes everything from the set.
+set.size – is the elements count.
+
+WeakMap:
+object can only be stored as a key.
+
+let john = { name: "John" };
+let map = new Map();
+map.set(john, "...");
+john = null; // overwrite the reference
+console.log(map.keys()); //  { { name: 'John' } }. object is not removed completely
+
+let john = { name: "John" };
+let weakMap = new WeakMap();
+weakMap.set(john, "...");
+john = null; // overwrite the reference
+// john is removed from memory!
+Compare it with the regular Map example above. Now if john only exists as the key of WeakMap – it will be automatically deleted from the map (and memory).
+
+WeakMap has only the following methods:
+weakMap.set(key, value)
+weakMap.get(key)
+weakMap.delete(key)
+weakMap.has(key)
+WeakMap does not support iteration and methods keys(), values(), entries(), so there’s no way to get all keys or values from it.
+
+Object.keys, values, entries: these methods returns the actual array while map and set methods return the iterator instead
+Object.keys(obj) – returns an array of keys.
+Object.values(obj) – returns an array of values.
+Object.entries(obj) – returns an array of [key, value] pairs.
+
+
+Array destructuring: 
+let [firstName, surname] = "John Smith".split(' ');
+alert(firstName); // John
+alert(surname);  // Smith
+
+let [name1, name2, ...titles] = ["Julius", "Caesar", "Consul", "of the Roman Republic"];
+// now titles = ["Consul", "of the Roman Republic"]
+
+Works with any iterable on the right-side
+let [a, b, c] = "abc"; // ["a", "b", "c"]
+let [one, two, three] = new Set([1, 2, 3]);
+
+let user = {};
+[user.name, user.surname] = "John Smith".split(' ');
+alert(user.name); // John
+alert(user.surname); // Smith
+
+let user = new Map();
+user.set("name", "John");
+user.set("age", "30");
+// Map iterates as [key, value] pairs, very convenient for destructuring
+for (let [key, value] of user) {
+  alert(`${key}:${value}`); // name:John, then age:30
+}
+
+Object destructuring
+let options = {
+  title: "Menu"
+};
+let {width: w = 100, height: h = 200, title} = options;
+alert(title);  // Menu
+alert(w);      // 100
+alert(h);      // 200
+
+let options = {
+  title: "Menu",
+  height: 200,
+  width: 100
+};
+// title = property named title
+// rest = object with the rest of properties
+let {title, ...rest} = options;
+// now title="Menu", rest={height: 200, width: 100}
+alert(rest.height);  // 200
+alert(rest.width);   // 100
+
+let title, width, height;
+// error in this line
+{title, width, height} = {title: "Menu", width: 200, height: 100};
+So here JavaScript assumes that we have a code block, that’s why there’s an error. We want destructuring instead.
+To show JavaScript that it’s not a code block, we can wrap the expression in parentheses (...):
+// okay now
+({title, width, height} = {title: "Menu", width: 200, height: 100});
+
+let options = {
+  size: {
+    width: 100,
+    height: 200
+  },
+  items: ["Cake", "Donut"],
+  extra: true
+};
+// destructuring assignment split in multiple lines for clarity
+let {
+  size: { // put size here
+    width,
+    height
+  },
+  items: [item1, item2], // assign items here
+  title = "Menu" // not present in the object (default value is used)
+} = options;
+alert(title);  // Menu
+alert(width);  // 100
+alert(height); // 200
+alert(item1);  // Cake
+alert(item2);  // Donut
+
+
+JSON.stringify to convert objects into JSON.
+JSON.parse to convert JSON back into an object.
+
+JSON supports following data types:
+Objects { ... }
+Arrays [ ... ]
+Primitives:
+strings,
+numbers,
+boolean values true/false,
+null.
+
+some JavaScript-specific object properties are skipped by JSON.stringify.
+Function properties (methods).
+Symbolic keys and values.
+Properties that store undefined.
+
+The important limitation: there must be no circular references.
+let room = {
+  number: 23
+};
+let meetup = {
+  title: "Conference",
+  participants: ["john", "ann"]
+};
+meetup.place = room;       // meetup references room
+room.occupiedBy = meetup; // room references meetup
+JSON.stringify(meetup); // Error: Converting circular structure to JSON
+
+let json = JSON.stringify(value[, replacer, space])
+
+an object may provide method toJSON for to-JSON conversion. JSON.stringify automatically calls it if available.
+let room = {
+  number: 23,
+  toJSON() {
+    return this.number;
+  }
+};
+alert( JSON.stringify(room) ); // 23
+
+let value = JSON.parse(str[, reviver]) : To decode a JSON-string
+
+let str = '{"title":"Conference","date":"2017-11-30T12:00:00.000Z"}';
+let meetup = JSON.parse(str);
+alert( meetup.date.getDate() ); // Error!
+
+let meetup = JSON.parse(str, function(key, value) {
+  if (key == 'date') return new Date(value);
+  return value;
+});
+alert( meetup.date.getDate() ); // now works!
+

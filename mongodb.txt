@@ -1,0 +1,41 @@
+MongoDB Driver:
+The MongoDB Driver is the official library that allows your Node.js application to communicate directly with MongoDB.
+Connection pooling is already built into the MongoDB driver.
+
+Mongoose:
+Mongoose is an ODM (Object Data Modeling) library built on top of the MongoDB Driver.
+It makes MongoDB easier to use in Node.js applications by adding: schemas, models, validation, middleware, hooks, relationships
+
+
+=> How do you decide between embedding and referencing?
+Embedding example:
+{
+  "_id": 101,
+  "name": "John",
+  "addresses": [
+    {
+      "city": "New York",
+      "type": "home"
+    }
+  ]
+}
+Use when:
+Data belongs together
+Read-heavy operations
+One-to-few relationships
+
+Referencing example:
+User collection:
+{
+ "_id":1,
+ "name":"John"
+}
+Order collection:
+{
+ "_id":100,
+ "userId":1
+}
+Use when:
+Large relationships
+Independent lifecycle
+Frequent updates

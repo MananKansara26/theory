@@ -1,0 +1,92 @@
+Dynamically typed: You don’t need to declare variable types; types are determined at runtime.
+Multi-paradigm: Supports multiple programming styles — procedural, object-oriented, and functional.
+Interpreted: Runs without compiling into machine code beforehand (though modern engines use Just-In-Time compilation).
+High-level: Abstracts away complex hardware-level details (memory management, etc.).
+
+✅ Feature that compiles JavaScript: JIT (Just-In-Time) Compilation
+💡 What is JIT Compilation?
+JIT is a technique used by modern JavaScript engines (like V8 in Chrome/Node.js, SpiderMonkey in Firefox) that compiles JavaScript code into machine code while the code is running (at runtime).
+This improves performance by combining the benefits of both interpreting and compiling.
+
+🔧 How It Works:
+Parsing: The JS engine reads and parses the code to create an Abstract Syntax Tree (AST).
+Interpretation: The engine quickly interprets and runs the code to start execution fast.
+Optimization: As the code runs, the engine identifies "hot" (frequently used) code.
+JIT Compilation: These hot parts are compiled into machine code for faster execution.
+Execution: The optimized machine code is executed instead of the original JS.
+
+⚙️ Examples of JavaScript Engines with JIT:
+V8 – used by Chrome and Node.js
+SpiderMonkey – used by Firefox
+JavaScriptCore – used by Safari
+
+🧠 Summary:
+While JavaScript is not compiled ahead of time like C/C++, JIT compilation allows it to be compiled during execution for better performance. This is a key feature of modern JavaScript engines.
+Let me know if you want to see a diagram or example!
+
+
+Difference betweeen high level and low level programming language:
+
+1. Definition
+
+Programming Language:
+A broad term for any language used to write full applications or systems.
+✅ Example: C, Java, Rust, Go
+Used for Creating full apps and systems
+
+Scripting Language:
+A subset of programming languages used to automate tasks, control software, or manipulate content dynamically.
+✅ Example: JavaScript, Python (used for scripting), Bash
+Scripting languages are often built on top of programming languages or use them under the hood.
+Used for	Automating & controlling other programs
+
+A scripting language is usually:
+Easier to write and understand (more human-friendly).
+Runs inside a host environment (like a browser, operating system, or application).
+Depends on a runtime or engine (which is written in a lower-level programming language).
+
+Scripting languages run on interpreters or engines that are built using lower-level programming languages.
+JavaScript runs on top of C++-based engine (v8 in chrome). Python scripts run on a C-based interpreter.
+
+🔍 2. Compilation vs Interpretation:
+
+Execution: Programming language is usually compiled (into machine code). While scripting language is usually interpreted (line-by-line)	
+Speed: Programming language is faster (compiled code runs directly). Scripting language is slower (due to interpretation)	
+⚠️ Note: Many modern scripting languages (like JS, Python) now use JIT compilation for better speed.
+
+
+
+Yes, JavaScript is a high-level programming language. ✅
+Because it abstracts away low-level details that you would have to manage manually in low-level languages like C or Assembly.
+
+
+JavaScript can execute not only in the browser, but also on the server, or actually on any device that has a special program called the JavaScript engine.
+
+Different engines have different “codenames”. For example:
+V8 – in Chrome, Opera and Edge.
+SpiderMonkey – in Firefox.
+…There are other codenames like “Chakra” for IE, “JavaScriptCore”, “Nitro” and “SquirrelFish” for Safari, etc.
+
+Node.js is not a language — it’s a runtime environment that runs JavaScript outside the browser (like on a server).
+
+Does Node.js run a high-level language?
+✅ Yes — Node.js runs JavaScript, which is a high-level language.
+
+
+1. use strict in JavaScript:
+Purpose: It’s a runtime directive that makes JavaScript code more secure by enforcing stricter parsing and error handling at "execution time".
+Scope: use strict only affects the JavaScript code that is running in that specific scope (either globally or within a function).
+Behavior: It catches common mistakes (like undeclared variables, assignment to read-only properties, and certain unsafe features) "at runtime".
+TypeScript is a superset of JavaScript that adds static typing to the language. It checks types at compile time, meaning you catch errors before the code runs, not during execution.
+
+"use strict";
+x = 3.14;  // Error: x is not defined
+
+"use strict";
+var x = 3; // OK
+y = 3; // Error: y is not declared
+
+"use strict";
+function example(a, a) { // Error: Duplicate parameter name not allowed in this context
+  return a;
+}

@@ -1,0 +1,29 @@
+GET: Fetch data. Show products, user profile, orders
+POST: Create new resource. Register user, place order, create blog
+PUT: Replace an entire resource. Replace all user profile details
+PATCH: Update part of a resource. Change only email or profile picture
+DELETE: Delete a resource. Delete product, remove user, cancel account
+OPTIONS: Check allowed methods (mainly for CORS). Browser sends preflight request before POST, PUT, or DELETE
+HEAD: Fetch only headers, not the response body. Check if a file exists or get file size before downloading. (HEAD /files/report.pdf)
+
+The OPTIONS method is used to discover which HTTP methods and headers are allowed for a resource. In practice, it's most commonly used by browsers for CORS preflight requests before sending cross-origin requests like POST, PUT, or DELETE. The server responds with the allowed methods, headers, and origins, and the browser decides whether it can continue with the actual request
+
+CORS Preflight Requests:
+Your frontend runs on: https://app.example.com
+Your backend runs on: https://api.example.com
+Before sending: POST /login
+the browser may first send: OPTIONS /login  
+The server responds with headers like:
+Access-Control-Allow-Origin: https://app.example.com
+Access-Control-Allow-Methods: GET, POST
+Access-Control-Allow-Headers: Authorization, Content-Type
+If the browser receives the expected CORS headers, it proceeds with the actual POST request. Otherwise, it blocks the request for security reasons.
+This is called a CORS preflight request.
+
+Browsers enforce the Same-Origin Policy for security. If a frontend tries to call an API hosted on a different origin, the browser checks the server's CORS headers before allowing the request. If those headers are missing or don't permit the origin, the browser blocks the request. Postman doesn't enforce CORS because it's an API client, not a browser, so it can call the API directly.
+
+Use of HEAD method:
+most developers rarely implement it manually. It's mainly used by browsers, CDNs, proxies, and download managers. A HEAD request is exactly like a GET request except the server returns only the response headers, not the body.
+Case 1: Check if a file exists before downloading or check the file size. 
+Imagine you're building Google Drive or Dropbox. A file is 2 GB.Instead of downloading the entire file just to check if it exists:
+Case 2: Health Checks. 

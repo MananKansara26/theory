@@ -1,0 +1,119 @@
+Mathematical Operators:
+Addition +,
+Subtraction -,
+Multiplication *,
+Division /,
+Remainder %,
+Exponentiation **.
+
+if the binary + is applied to strings, it merges (concatenates) them
+Other arithmetic operators work only with numbers and always convert their operands to numbers.
+
+Assignment
+Let’s note that an assignment = is also an operator. It is listed in the precedence table with the very low priority of 2.
+assignment returns a value
+
+let a = 1;
+let b = 2;
+let c = 3 - (a = b + 1); // c => 0
+Although, please don’t write the code like that. Such tricks definitely don’t make code clearer or readable.
+
+Chaining assignments : Chained assignments evaluate from right to left
+a = b = c = 2 + 2;
+First, the rightmost expression 2 + 2 is evaluated and then assigned to the variables on the left: c, b and a. At the end, all the variables share a single value.
+For the purposes of readability it’s better to split such code into few lines:
+c = 2 + 2;
+b = c;
+a = c;
+
+
+Increment/decrement operator:
+let counter = 1;
+let b = counter++; // b = 1
+let a = ++counter; // a = 2
+
+
+Bitwise operators:
+These operators are used very rarely. Web development has little use of them, but in some special areas, such as cryptography, they are usefu
+
+Comma:
+The comma operator , is one of the rarest and most unusual operators.
+let a = (1 + 2, 3 + 4); // a = 7 (3+4)
+The first expression 1 + 2 is evaluated and its result is thrown away. Then, 3 + 4 is evaluated and returned as the result.
+
+Comparisions:
+String comparision : JavaScript uses the so-called “dictionary” or “lexicographical” order.
+Here “lexicographical” means not as per alphabatically but as per unicode
+
+console.log("a".charCodeAt(0)); // 97
+console.log("A".charCodeAt(0)); // 65
+
+alert( 'Z' > 'A' ); // true
+alert( 'Glow' > 'Glee' ); // true
+alert( 'Bee' > 'Be' ); // true
+The algorithm to compare two strings is simple:
+
+Compare the first character of both strings.
+If the first character from the first string is greater (or less) than the other string’s, then the first string is greater (or less) than the second. We’re done.
+Otherwise, if both strings’ first characters are the same, compare the second characters the same way.
+Repeat until the end of either string.
+If both strings end at the same length, then they are equal. Otherwise, the longer string is greater.
+
+Comparision of different types:
+When comparing values of different types, JavaScript converts the values to numbers.
+
+Strict equality:
+A regular equality check == has a problem. It cannot differentiate 0 from false:
+alert( 0 == false ); // true
+A strict equality operator === checks the equality without type conversion.
+alert( 0 === false ); // false, because the types are different
+
+Comparison with null and undefined:
+For a strict equality check === : alert( null === undefined ); // false because each of them is a different type.
+For a non-strict check == : alert( null == undefined ); // true
+For maths and other comparisons < > <= >=
+null/undefined are converted to numbers: null becomes 0, while undefined becomes NaN.
+
+Strange result: null vs 0
+alert( null > 0 );  // (1) false
+alert( null == 0 ); // (2) false
+alert( null >= 0 ); // (3) true
+
+
+Logical operators: || (OR), && (AND), ! (NOT), ?? (Nullish Coalescing)
+
+|| (OR) :
+If an operand is not a boolean, it’s converted to a boolean for the evaluation.
+OR "||" finds the first truthy value
+The OR || operator does the following:
+1.Evaluates operands from left to right.
+2.For each operand, converts it to boolean. If the result is true, stops and returns the original value of that operand.
+3.If all operands have been evaluated (i.e. all were false), returns the last operand.
+
+&& (AND):
+AND “&&” finds the first falsy value.
+The AND && operator does the following:
+1.Evaluates operands from left to right.
+2.For each operand, converts it to a boolean. If the result is false, stops and returns the original value of that operand.
+3.If all operands have been evaluated (i.e. all were truthy), returns the last operand.
+
+! (NOT):
+The operator accepts a single argument and does the following:
+1.Converts the operand to boolean type: true/false.
+2.Returns the inverse value.
+A double NOT !! is sometimes used for converting a value to boolean type:
+alert( !!"non-empty string" );
+The precedence of NOT ! is the highest of all logical operators, so it always executes first, before && or ||.
+
+?? (Nullish coalescing operator):
+We can rewrite result = a ?? b using the operators that we already know, like this:
+result = (a !== null && a !== undefined) ? a : b;
+We can also use a sequence of ?? to select the first value from a list that isn’t null/undefined.
+The precedence of the ?? operator is the same as ||
+Due to safety reasons, JavaScript forbids using ?? together with && and || operators, unless the precedence is explicitly specified with parentheses.
+let x = 1 && 2 ?? 3; // Syntax error
+let x = (1 && 2) ?? 3; // Works
+
+
+alert( alert(1) || 2 || alert(3) );
+The alert returns undefined, so OR goes on to the second operand searching for a truthy value.

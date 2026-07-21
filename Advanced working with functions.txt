@@ -1,0 +1,80 @@
+The “arguments” variable:
+function showName() {
+  alert( arguments.length );
+  alert( arguments[0] );
+  alert( arguments[1] );
+
+  // it's iterable
+  // for(let arg of arguments) alert(arg);
+}
+arguments is both array-like and iterable, it’s not an array. It does not support array methods, so we can’t call arguments.map(...) for example.
+Arrow functions do not have "arguments"
+
+Spread syntax: When ...arr is used in the function call, it “expands” an iterable object arr into the list of arguments.
+let arr1 = [1, -2, 3, 4];
+let arr2 = [8, 3, -8, 1];
+alert( Math.max(...arr1, ...arr2) ); // 8
+
+
+Variable scope, closure:
+If a variable is declared inside a code block {...}, it’s only visible inside that block.
+{
+  let message = "Hello"; // only visible in this block
+  alert(message); // Hello
+}
+alert(message); // Error: message is not defined
+For if, for, while and so on, variables declared in {...} are also only visible inside it
+
+Nested functions:
+A function is called “nested” when it is created inside another function. It is easily possible to do this with JavaScript.
+function makeCounter() {
+  let count = 0;
+
+  return function() {
+    return count++;
+  };
+}
+let counter = makeCounter();
+alert( counter() ); // 0
+alert( counter() ); // 1
+alert( counter() ); // 2
+
+If you want to include the internal mechanism ([[Environment]]), these are the 5 most important closure notes:
+Every function in JavaScript has a hidden [[Environment]] property that stores a reference to the lexical environment where the function was created.
+A closure is a function along with its [[Environment]] reference, allowing it to access variables from its outer scope even after the outer function has finished executing.
+[[Environment]] stores a reference, not a copy, so if an outer variable changes, the closure sees the updated value.
+The JavaScript engine follows the [[Environment]] chain to look up variables. If a variable isn't found in the current scope, it searches parent lexical environments until it reaches the global scope.
+A lexical environment remains in memory as long as at least one function references it through [[Environment]]. Once no closures reference it, the garbage collector can free that memory.
+Interview Definition: A closure is a function that remembers its lexical scope through its hidden [[Environment]] reference, allowing it to access outer variables even after the outer function has returned.
+
+
+Function object, NFE: In JavaScript, functions are objects.
+A good way to imagine functions is as callable “action objects”. We can not only call them, but also treat them as objects: add/remove properties, pass by reference etc
+
+The “name” property:
+function sayHi() {
+  alert("Hi");
+}
+alert(sayHi.name); // sayHi
+
+The “length” property:
+function f1(a) {}
+function f2(a, b) {}
+function many(a, b, ...more) {}
+alert(f1.length); // 1
+alert(f2.length); // 2
+alert(many.length); // 2
+
+Custom properties: We can also add properties of our own.
+function sayHi() {
+  alert("Hi");
+  // let's count how many times we run
+  sayHi.counter++;
+}
+sayHi.counter = 0; // initial value
+sayHi(); // Hi
+sayHi(); // Hi
+alert( `Called ${sayHi.counter} times` ); // Called 2 times
+A property is not a variable:
+A property assigned to a function like sayHi.counter = 0 does not define a local variable counter inside it. In other words, a property counter and a variable let counter are two unrelated things.
+We can treat a function as an object, store properties in it, but that has no effect on its execution. Variables are not function properties and vice versa. These are just parallel worlds.

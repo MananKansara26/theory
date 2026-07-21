@@ -1,0 +1,320 @@
+React:
+React is an open-source JavaScript library used to build fast, interactive, and reusable user interfaces (UIs), especially for single-page applications (SPAs). It is component-based, uses a Virtual DOM to efficiently update the UI, and follows a declarative programming approach.
+
+Why is React called a library and not a framework?
+React is a library because it mainly focuses on building the user interface (UI). It doesn't provide everything needed to build an application, like routing, state management, or API handling. Developers choose those separately. A framework, on the other hand, provides a complete structure and decides how the application is organized
+React (Library): "I can choose React Router for routing, Redux or Zustand for state management, and Axios or Fetch for API calls."
+Framework (like Angular): "Most of these features are built in, so the framework provides the complete solution."
+
+React is fast because it uses the Virtual DOM, efficient diffing (reconciliation), and Fiber Architecture to update only the parts of the UI that have changed instead of re-rendering the entire page.
+
+DOM (Document Object Model): the actual tree of HTML elements that the browser creates.
+Why is updating the Real DOM slow?
+Suppose you have 10,000 HTML elements. When one value changes, The browser has to :
+Update the DOM
+Recalculate styles
+Recalculate layout
+Repaint
+Possibly re-render nearby elements
+These operations are relatively expensive
+
+What is the Virtual DOM? 
+The Virtual DOM is just a JavaScript object that represents the UI.
+
+Why create another DOM?
+Because comparing JavaScript objects is much faster than manipulating browser DOM nodes.
+Old Virtual DOM
+        ↓
+New Virtual DOM
+        ↓
+Compare both
+        ↓
+Find differences
+        ↓
+Update only changed parts in Real DOM
+This process is called Reconciliation.
+Reconciliation is the overall process of comparing the trees and deciding the minimal updates needed for the real DOM.
+
+What is Diffing? Diffing means comparing two Virtual DOM trees.
+
+React Fiber is the internal rendering engine of React. It makes rendering faster by breaking large rendering work into smaller tasks, so the browser stays responsive.
+
+Diffing = Finding the differences
+Reconciliation = Deciding what to update
+Fiber Architecture = How React performs the work
+
+React Lifecycle (High Level):
+Component Created
+        ↓
+Render
+        ↓
+Virtual DOM Created
+        ↓
+Real DOM Updated
+        ↓
+User Clicks
+        ↓
+State Changes
+        ↓
+Re-render
+        ↓
+New Virtual DOM
+        ↓
+Diffing
+        ↓
+Reconciliation
+        ↓
+Real DOM Updated
+
+
+
+=> JSX (JavaScript XML)
+It is a syntax extension for JavaScript that lets us write HTML-like code inside JavaScript. React uses JSX to describe what the UI should look like. Before the code runs in the browser, JSX is converted into regular JavaScript.
+We need JSX in React because it makes writing UI components easier and more readable. It allows us to write HTML-like code inside JavaScript, which helps us describe the structure of the UI in a clear way
+
+
+=> Class component and React Lifecycle:
+https://www.w3schools.com/react/react_lifecycle.asp
+
+
+When does React re-render?
+A re-render happens when React detects a change that can affect the UI.
+1. State changes
+2. Props change
+3. Parent component re-renders
+
+=> Fragements:
+A Fragment is a React feature that allows you to group multiple elements without adding an extra DOM element (like a <div>).
+<>
+   <h1>Hello</h1>
+   <p>Welcome</p>
+</>
+You can use Fragments in lists/arrays, but there is an important difference:
+✅ React.Fragment can be used with a key
+❌ Fragment shorthand <>...</> cannot have a key
+function Users() {
+  return (
+    <>
+      {users.map(user => (
+        <React.Fragment key={user.id}>
+          <h2>{user.name}</h2>
+          <p>{user.role}</p>
+        </React.Fragment>
+      ))}
+    </>
+  );
+}
+
+
+=> useState:
+is a React Hook that allows functional components to store and update data (state).
+Never update state directly. Because React does not know that the value changed. The setter function tells React: The state changed. Update the UI.
+we can get the previous state as a argument if we want : setCount(prevCount => prevCount + 1);
+React does not update state immediately. It queues state updates and processes them together after your event handler finishes.
+function Counter() {
+  const [number, setNumber] = useState(0);
+  function handleClick() {
+    setNumber(number + 1);
+    setNumber(number + 1);
+    setNumber(number + 1);
+  }
+  return (
+    <button onClick={handleClick}>
+      {number}
+    </button>
+  );
+}
+You might expect: 0 → 1 → 2 → 3
+But the result is: 0 → 1
+Because all three lines see the same old value. 
+At the start: number = 0
+React sees:
+setNumber(0 + 1);
+setNumber(0 + 1);
+setNumber(0 + 1);
+
+
+useEffect:
+useEffect lets you perform side effects after React renders the component.
+A side effect is anything other than returning JSX, such as:
+Fetching data from an API
+Setting a timer
+Adding event listeners
+Updating the document title
+Accessing localStorage
+
+useEffect(() => {}, []) runs after the initial render. In production it runs once, but in React 18 development with React.StrictMode, the effect may execute twice because React intentionally remounts the component to help identify side effects and ensure cleanup functions work correctly.
+
+useEffect(() => {}) => After every render. componentDidMount + componentDidUpdate
+useEffect(() => {}, []) => Once after initial render. componentDidMount
+useEffect(() => {}, [count]) => After initial render and whenever count changes. componentDidMount + componentDidUpdate (checking count)
+return () => {} => Before unmount and before re-running the effect. componentWillUnmount
+
+
+useReducer:
+useReducer is a React Hook used to manage complex state logic. It is an alternative to useState when state updates depend on multiple actions or when you have related pieces of state.
+syntax : const [state, dispatch] = useReducer(reducer, initialState);
+function countReducer(state, action) {
+  console.log("coming in reducer", action)
+  switch(action.type) {
+    case "increment": return ++state; 
+    case "decrement": return --state;
+    default: return state;
+  }
+}
+export default function App() {
+  const [count, dispatch] = useReducer(countReducer, 0);
+  return (
+    <>
+      Counter is : {count}
+      <button onClick={() => dispatch({ type: "increment" })}>+</button>
+      <button onClick={() => dispatch({ type: "decrement" })}>-</button>
+    </>
+  );
+}
+type is not required by useReducer; it's a convention. React passes whatever value you provide to dispatch() into the reducer as the action argument. Using an object with a type property is the standard approach because it makes actions descriptive, scalable, and consistent with React and Redux best practices.
+development mode with StrictMode, React intentionally calls your reducer twice for each update to help detect impure functions.
+
+
+useRef:
+is a React Hook that allows us to store a mutable value that persists across renders without causing a re-render when the value changes.
+const ref = useRef(initialValue); // It returns an object with a current property.
+console.log(countRef.current);
+countRef.current can be changed, but React will not re-render the component.
+Real-world use case:
+1: Accessing DOM elements
+function Login() {
+  const inputRef = useRef(null);
+  useEffect(() => {
+    inputRef.current.focus();
+  }, []);
+  return (
+    <input 
+      ref={inputRef}
+      placeholder="Enter username"
+    />
+  );
+}
+2: Storing previous value
+function Price({ price }) {
+  const previousPrice = useRef();
+  useEffect(() => {
+    previousPrice.current = price;
+  }, [price]);
+  return (
+    <>
+      <h2>Current: {price}</h2>
+      <h2>Previous: {previousPrice.current}</h2>
+    </>
+  );
+}
+3: Timer IDs => like intervals 
+
+
+=> Debouncing VS throttling
+Debouncing: Debouncing delays the execution of a function until a certain amount of time has passed after the last event
+function debouncing(fn, delay) {
+  let timer;
+  return function(...args) {  
+    clearInterval(timer);
+    timer = setTimeout(() => {
+      fn(...args);
+    }, delay)
+  }
+}
+function APICall(value) {
+  console.log("API call", value);
+}
+const searchAPI = debouncing(APICall, 200);
+searchAPI("a");
+searchAPI("ab");
+searchAPI("abc");
+searchAPI("abcd");
+
+Throttling: Throttling limits how frequently a function can execute.
+Execute the function at a fixed interval, no matter how many events happen. ignore the events between the interval
+function throttle(fn, limit) {
+  let lastCall = 0;
+  return function (...args) {
+    const now = Date.now();
+    if (now - lastCall >= limit) {
+      lastCall = now;
+      fn(...args);
+    }
+  };
+}
+real world example : to show scrolling status as a progressbar
+
+
+
+Controlled vs Uncontrolled Components:
+Controlled Component: 
+A controlled component is a component where React state controls the form element value.
+Uses useState
+when to use:
+validation is easier
+dynamic UI updates are easier
+React has complete control
+
+Uncontrolled Component:
+An uncontrolled component is a component where the DOM itself manages the form value.
+Uses useRef
+when to use:
+integrating with non-React libraries
+handling file inputs
+simple forms where you don't need live state updates
+
+For most React applications use controlled component
+
+
+
+=> Prop drilling:
+Prop drilling is passing data through multiple components that do not actually need that data, just to reach a deeply nested component.
+Solutions for prop drilling: Context API (React built-in) and State management libraries
+
+
+
+
+
+
+
+=> fetch VS axios:
+Fetch is a built-in JavaScript API for making HTTP requests, while Axios is a third-party library that provides additional features like automatic JSON conversion, request/response interceptors, better error handling, and request cancellation
+
+Automatic JSON Parsing:
+fetch("/users")
+  .then(res => res.json())   // Must parse manually
+  .then(data => console.log(data));
+axios.get("/users")
+  .then(res => console.log(res.data)); // Already parsed
+
+Better Error Handling:
+fetch("/users")
+  .then(res => {
+    if (!res.ok) {
+      throw new Error("Request failed");
+      // Because Fetch only rejects the promise for network errors, such as: no internet, server down, DNS failure
+      // But if the server responds with: 404, 401, 500, fetch still considers the request successful because it received a response from the server
+    }
+    return res.json();
+  })
+  .catch(err => console.log(err));
+axios.get("/users")
+  .then(res => console.log(res.data))
+  .catch(err => console.log(err)); // If the server returns 404, Axios automatically jumps to:
+
+Request/Response Interceptors:
+axios.get("/profile", {
+  headers: {
+    Authorization: `Bearer ${token}`
+  }
+});
+axios.get("/orders", {
+  headers: {
+    Authorization: `Bearer ${token}`
+  }
+});
+axios.interceptors.request.use(config => {
+  config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});

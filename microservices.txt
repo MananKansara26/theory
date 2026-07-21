@@ -1,0 +1,94 @@
+When designing a microservices architecture, my first goal is to ensure each service has a single business responsibility. For example, I would separate User Service, Order Service, Payment Service, and Notification Service. Each service would own its own database, so no service directly accesses another service's data. This keeps them loosely coupled and allows independent deployment and scaling.
+
+For communication, I prefer using synchronous APIs like REST or GraphQL when an immediate response is required, such as validating a user before creating an order. For operations that don't require an instant response, like sending emails, updating analytics, or generating reports, I would use asynchronous messaging with a message broker such as RabbitMQ or Kafka. This improves reliability and reduces dependencies between services.
+
+Since every microservice has its own database, we can't easily use one transaction across all services. Instead, we use the Saga pattern. Each service completes its own task and publishes an event. If a later step fails, another event triggers compensating actions, like cancelling the order or releasing reserved stock. This keeps the system eventually consistent without requiring distributed database transactions.
+
+I'd add retries with exponential backoff to handle temporary failures without overwhelming services. I'd make important APIs idempotent so duplicate requests don't cause duplicate actions, like charging a customer twice. Failed messages would go to a Dead Letter Queue for later investigation. For monitoring, I'd use centralized logging to collect logs in one place, distributed tracing to follow requests across services, and metrics to monitor things like response times, error rates, and system health.
+
+Problem:
+suppose we have these microservices:
+1.Order Service → Creates the order.
+2.Payment Service → Charges the customer.
+3.Inventory Service → Reduces stock.
+4.Notification Service → Sends a confirmation email.
+
+Step 1: Order Service creates the order ✅
+Step 2: Payment Service tries to charge the card ❌ Failed
+
+In such case in monolithic we can use rollback. but in microservices each has different databases
+
+Solution:
+Saga Pattern: Each service completes its own work, and if something later fails, we'll undo the earlier work
+
+A compensating action simply means undoing a previous step.
+Create Order ✅
+Reserve Stock ✅
+Payment Failed ❌
+
+Now undo everything:
+Release Stock
+Cancel Order
+Refund Payment (if needed)
+
+Since every microservice has its own database, we can't easily use one transaction across all services. Instead, we use the Saga pattern. Each service completes its own task and publishes an event. If a later step fails, another event triggers compensating actions, like cancelling the order or releasing reserved stock. This keeps the system eventually consistent without requiring distributed database transactions.
+
+Retries with Exponential Backoff:
+Order Service → Payment Service ❌ Failed
+Try 1 ❌
+Wait 1 second
+Try 2 ❌
+Wait 2 seconds
+Try 3 ❌
+Wait 4 seconds
+Try 4 ✅ Success
+If thousands of services retry immediately, they can overwhelm the recovering service. Waiting longer between retries gives it time to recover.
+
+Idempotent APIs:
+Suppose the Payment Service successfully charges ₹1000.But before it can reply, the network connection is lost.
+Order Service
+     |
+Charge ₹1000
+     |
+Network Error ❌
+The Order Service thinks the payment failed, so it retries.
+Without idempotency:
+Charge ₹1000
+Charge ₹1000 Again
+The customer gets charged twice.
+
+With an idempotency key
+Every payment request includes a unique ID:
+Payment Request
+Idempotency Key = abc123
+The Payment Service stores that key.
+If it receives the same request again:
+Idempotency Key = abc123
+Already processed.
+Return previous result.It doesn't charge again.
+An idempotent API guarantees that sending the same request multiple times has the same effect as sending it once.
+
+Dead Letter Queue (DLQ):
+Imagine every payment message fails because the card information is invalid.
+Instead of retrying forever, after (say) 5 failed attempts:
+RabbitMQ
+     ↓
+Dead Letter Queue
+Developers can later inspect those failed messages and decide what to do.
+
+Centralized Logging:
+Suppose a request passes through three services:
+If each service writes logs only on its own server, debugging becomes difficult.
+Instead, all services send their logs to one place, such as:
+ELK Stack (Elasticsearch + Logstash + Kibana)
+Grafana Loki
+Splunk
+Then you can search all logs from one dashboard.
+
+Distributed Tracing:
+Tracing tells you where the request went. A request travels through multiple services. A tracing tool assigns one Trace ID.
+This helps answer questions like:
+Which service is slow?
+Where did the request fail?
+How long did each service take?
+Common tools include Jaeger and Zipkin.

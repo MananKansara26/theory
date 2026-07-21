@@ -1,0 +1,216 @@
+=> what is nodejs?
+runtime environment that lets you run JavaScript outside the browser, on the server side.
+It's built on Google Chrome's V8 engine (same engine that runs JS in Chrome), which compiles JS to machine code for fast execution.
+It uses a single-threaded, event-driven, non-blocking I/O model 
+
+=> Non-blocking I/O
+I/O = Input/Output operations — reading a file, querying a database, calling an API, network requests. These are naturally slow operations (they take time to complete).
+This is possible because the actual I/O work is handed off to the OS / libuv's thread pool in the background, not handled by your single main thread.
+example: 
+const fs = require('fs');
+console.log('1. Start reading file...');
+// Non-blocking (async) - Node's default behavior
+fs.readFile('bigfile.txt', 'utf8', (err, data) => {
+  console.log('3. File reading completed!');
+});
+console.log('2. This runs immediately, without waiting for file read');
+output:
+1. Start reading file...
+2. This runs immediately, without waiting for file read
+3. File reading completed!
+
+=> Event-driven
+Once that background I/O task completes, it doesn't interrupt anything — it just adds a "callback" (or event) into a queue.
+Node has an Event Loop constantly running, checking: "Is the call stack empty? If yes, is there any completed task waiting in the queue? Let's execute its callback now."
+So execution is driven by events completing, not by sequential waiting.
+
+=> libuv library
+libuv is a cross-platform (runs of linux, windows etc) C library for asynchronous I/O and event-driven programming.
+It was originally developed for Node.js to provide a consistent, high-performance way to handle I/O
+Main features of libuv library :
+event loop, Asynchronous TCP and UDP networking, Asynchronous file system operations, DNS resolution, Timers, Thread pool
+
+JavaScript (the language) does not have its own event loop. JavaScript code running in a browser uses the browser's event loop. JavaScript code running in Node.js uses libuv's event loop.
+
+=> JavaScript VS nodejs
+js runs on browser while node runs on server
+js globar object is window and nodejs global object is "global"
+js can use ESM module while node can use ESM + commonjs modules
+each browser has its own engine to run js while node runs only on V8(chrom's engine)
+
+libuv = Event Loop + Async I/O + Thread Pool
+V8 = JavaScript execution + Promise microtasks
+Node.js = connects V8 and libuv + manages process.nextTick()
+
+The call stack is a LIFO data structure maintained by the JavaScript engine to keep track of function execution. Every time a function is called, it's pushed onto the stack. When it completes, it's popped off. Since JavaScript is single-threaded, only the function at the top of the call stack is executing at any given time. The event loop only schedules asynchronous callbacks when the call stack is empty.
+
+=> Types of Queue that Event Loop checks:
+1. Microtask Queue (Higher Priority): This queue is processed before the event loop moves to the next phase.
+Promise callbacks (.then(), .catch(), .finally()) — managed by V8
+queueMicrotask() — managed by V8
+process.nextTick() — Node.js-specific, and it has even higher priority than other microtasks
+2. Macrotask (Callback) Queues: These contain callbacks that are executed during different event loop phases.
+setTimeout()
+setInterval()
+I/O callbacks (fs.readFile, network operations)
+setImmediate()
+
+Priority:
+1. process.nextTick() Queue   ← Highest priority
+2. Promise Microtask Queue
+Inside the Promise microtask queue, there is no separate priority between Promise.then() and queueMicrotask(). They are both part of the same microtask queue and are executed in FIFO (First In, First Out) order.
+   - Promise.then()
+   - Promise.catch()
+   - Promise.finally()
+   - queueMicrotask()
+3. Event Loop (Timers, Poll, Check, ...)
+
+console.log("Start");
+setTimeout(() => console.log("setTimeout"), 0);
+Promise.resolve().then(() => console.log("Promise"));
+queueMicrotask(() => console.log("queueMicrotask"));
+process.nextTick(() => console.log("nextTick"));
+console.log("End");
+
+Start
+End
+nextTick
+Promise
+queueMicrotask
+setTimeout
+
+Web APIs are APIs provided by the browser, such as setTimeout, fetch, and DOM APIs. They are not part of JavaScript itself. In Node.js, there are no Web APIs. Instead, Node.js provides its own core APIs like fs, http, and crypto, and uses libuv along with the operating system to perform asynchronous operations and manage the event loop.
+
+
+
+=> what is Backpressure in file system?
+Backpressure occurs when a readable stream produces data faster than a writable stream can consume it. If it's not handled, data accumulates in memory, leading to high memory usage.
+
+Reading speed = 100 MB/sec
+Writing speed = 20 MB/sec
+
+After 1 second:
+Read 100 MB
+Written 20 MB
+Remaining in RAM = 80 MB => 800 MB sitting in RAM
+Eventually, memory usage grows significantly.
+
+Does Node.js always handle backpressure automatically?
+✅ Yes, when you use APIs like stream.pipe() (or the modern stream.pipeline()).
+rs.pipe(ws);
+
+❌ No, if you manually read 'data' events and call write() yourself, you are responsible for checking the return value of write() and handling 'drain'.
+
+const fs = require("fs");
+const rs = fs.createReadStream("input.txt");
+const ws = fs.createWriteStream("output.txt");
+rs.on("data", (chunk) => {
+    const canWrite = ws.write(chunk); 
+    // true → The writable stream can accept more data.
+    // false → The internal buffer is full. Wait for the 'drain' event.
+
+    if (!canWrite) {
+        rs.pause(); // Stop reading temporarily
+    }
+});
+ws.on("drain", () => {
+    rs.resume(); // Continue reading
+});
+rs.on("end", () => {
+    ws.end();
+});
+
+
+=> pipe() VS pipeline():
+pipe() and pipeline() are both used to connect Node.js streams, but they differ in how they handle errors, cleanup, and completion.
+In modern Node.js, pipeline() is generally the recommended choice because it handles error propagation and resource cleanup automatically.
+
+Error Handling Comparison: 
+pipe():
+readable
+    .pipe(transform)
+    .pipe(writable);
+❌ Error is not automatically propagated to all streams.
+❌ You must listen for "error" on each stream.
+❌ You may need to destroy remaining streams yourself.
+
+pipeline():
+pipeline(
+    readable,
+    transform,
+    writable,
+    callback
+);
+✅ Error is propagated.
+✅ Remaining streams are destroyed.
+✅ Callback (or rejected Promise) receives the error.
+
+=> Buffer VS Stream:
+A Buffer is a block of memory that stores binary data, whereas a Stream is a mechanism for processing data incrementally. When you use fs.readFile(), Node reads the entire file into a Buffer before returning it. When you use fs.createReadStream(), Node reads the file in small chunks, and each chunk is a Buffer. Streams are therefore more memory-efficient for large files because they don't require the whole file to be loaded into memory at once.
+Buffer = container of data. Stream = pipeline that moves data. A stream typically uses buffers internally to transfer data chunk by chunk.
+
+
+=> path.join() VS path.resolve() :
+
+path.join():
+Join path segments.
+Processing => Left to right
+Returns absolute path? => No (unless input already starts with one)
+path.resolve('users', 'john', 'file.txt');
+// "/current/working/directory/users/john/file.txt"
+
+path.resolve():
+Compute an absolute path
+Processing => Right to left until absolute path found
+internally use process.cwd()
+
+path.join('src', 'app.js'); // "src/app.js"
+path.resolve('src', 'app.js'); // "/Users/alice/project/src/app.js"
+process.cwd() = /Users/alice/project
+
+path.join('/foo', 'bar'); // "/foo/bar"
+path.resolve('/foo', 'bar'); // "/foo/bar"
+
+path.join('foo', '/bar', 'baz'); // "foo/bar/baz"
+path.resolve('foo', '/bar', 'baz'); // "/bar/baz" => until absolute path found
+
+path.join('src', '..', 'dist'); // "dist"
+path.resolve('src', '..', 'dist'); // "/current/working/directory/dist"
+
+path.join(); // "."
+path.resolve(); // process.cwd()
+
+
+__dirname VS process.cwd():
+__dirname: 
+Directory of the current file. 
+Fixed for a given file. Does not depend on where you run node
+Available in CommonJS modules
+
+process.cwd():
+Current working directory where the Node.js process was started
+Can change during runtime. Depends on where you run node
+Available everywhere via process
+
+project/
+│
+├── app.js
+├── src/
+│   └── utils.js
+└── data/
+
+Scenario 1:
+cd project
+node src/utils.js
+__dirname      -> /project/src
+process.cwd()  -> /project
+
+Scenario 2:
+cd /
+node /project/src/utils.js
+__dirname      -> /project/src
+process.cwd()  -> /
+
+
+=> What happens if 100 users hit a single Node.js server at the same time?
+Node.js receives all requests through its event loop. For database operations, requests use connections from the MongoDB connection pool. If the pool has fewer connections than concurrent requests, some requests wait in the driver's queue until a connection becomes available. Node.js can continue processing other asynchronous operations while waiting for I/O, but CPU-heavy operations can block the event loop.
