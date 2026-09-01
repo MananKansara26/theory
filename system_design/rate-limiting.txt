@@ -1,0 +1,8 @@
+Where does it live?
+Two options, worth naming upfront:
+1. In-process (a counter in the app's memory) — trivial, but breaks the moment you have more than one server instance. Server A doesn't know what Server B has counted, so a client can get 2x their limit by hitting different instances.
+2. Centralized store (Redis) — all instances check the same counter. This is the real answer for anything horizontally scaled, and it's what we used for the counter in the URL shortener for the same reason: shared, atomic, fast.
+So: Redis-backed, sitting as middleware in front of your API servers.
+
+
+=> The algorithms:

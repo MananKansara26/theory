@@ -1,0 +1,99 @@
+Tell me about yourself.
+=> contributed to client and product. enjoy writing clean, scalabale code . i am exited to learn from your team and add value
+What interests you about this position/company?
+
+
+=> What are your strengths?
+Adaptability: I can quickly learn and adapt to new technologies and business domains.
+User-focused thinking: I always try to think from the end user's perspective to build features that are useful and easy to use.
+Ownership: I take responsibility for my tasks and make sure they are completed with quality and on time.
+Teamwork: I work well with my team, communicate openly, and help others whenever needed.
+
+
+=> What are your weaknesses?
+One weakness I have is that I sometimes try to make everything perfect.
+Because of that, I can spend extra time on small details, which may delay delivery. 
+I'm improving by focusing on what's most important, finishing the work on time, and making further improvements later if needed.
+
+
+=> Can you provide an example of a challenging situation you've faced at work and how you handled it?
+
+
+=> Why did you leave your previous job (or why are you looking to leave your current job)?
+I had a really good experience at my previous company and learned a lot there. 
+However, there was a shortage of projects, and around the same time my employment bond was completed. 
+We mutually decided not to continue, and now I'm looking for a new opportunity where I can contribute, learn, and grow.
+
+
+Where do you see yourself in 5 years?
+Describe a time when you worked in a team.
+9. What relevant skills and experiences do you bring to this role?
+10. Do you have any questions for us?
+
+salary discussion
+current is  based on my expeirnece, considering role and respon. i am aminig around 10. open to disussion on compoansation based on role and groth opportunity 
+
+made mistakes
+early on,when started ai to speed things up. i relied too much on generated code and didnt fully reivied the logic. testing showed some edge case were missed. i fixed the issues, added more thora testing and code reviees. i leanred to treat the ai as a tool not a replacement. not relie blindly
+
+
+
+Stories:
+1. Achievement Story
+Example: Successfully led a project that resulted in a X% increase in revenue.
+2. Adaptability Story
+Example: Successfully transitioned to a new role in a different department.
+Let's say you have moved from an administration role to a managerial role. Talk about the challenges you faced, the new skills you learned, and how you thrived in the new role.
+3. Conflict Resolution Story
+Example: Resolved a conflict between team members with differing work styles.
+4. Leadership Story
+Example: Headed a team during a critical project with a high-pressure deadline.
+5. Failure or Learning Experience
+Example: Faced a setback when a product launch didn't meet expectations.
+
+
+Listen to the interviewer carefully.. if dont understand the question then ask for clearity
+
+
+Vocabular expansion
+
+
+STAR pattern. add learming. task means reasponsiblity => for behavioural question
+problem, anaylsis, solution, resul => for technal
+
+
+
+
+
+
+
+i want to prepare for the behavioral round. i have 4 years of experience and i want to prepare as per that. i want the answer in bullet points as i dont want to memorize the whole para but want to just remember the points. start patter would be great
+
+
+
+=> how you handle the confilct with your client and proejct manager?
+
+1. In my one of the proejct i had conflict with the client. he has given me the requirement with the deadline. while working on the feature he started adding the things requirement and as a result i was not able to achieve the goal. so i told him that it was due to the requirement increment.
+
+2. when i was designing the requestweed, i was at the initial level of the development of the features. that time my manager was pressuring to complete the feature very fast. but i informed that its the initial stage of proejct so i need to make the code maintable for future, scalalble.. onece the setup will be done then the development of the feature will be done very fast. but if i dont write the proper code right now then it will impact the quality of code in the inital stage of the development which is bad idea than meeting the deadline.
+
+3. at healthray, one hospital wants a different features then the actual production... but that hospital was paying much. so my company decided to make new branch for that org and code different for that hospitals... but i denied them as creating new branch for hospital who is paying more is not good. it will be hard in future to maintain the code. but would be the solution of that i dont know so please let me know
+
+
+=> when you showed the Leadership skills:
+
+1. at frigid i found out that there were problem with some mongodb aggregation queries which was taking too mutch time. in my previouse project i have worked with mongdb query and aggregation a lot so i know some opimization tricks for the mongodb. in the inital level of the proejct i noticed that but i was working on the deadline task. so i noted those points. but when i had no task assigned and there is some backlog i first discussed with the manager about this and solved them one by one. so this way i imporeved the query performace and got good reviews from the client.
+
+2. at requestweed, my client was using the paid scrapping tool to scrap the data from the website. one time i was checking the website and found that the website he was scrapping is using the public API. I checked the API in the postman and in half day i desing the scrapping tool for the same website. i showed this tool to client and he got happy and it helped him to save the money.
+
+
+=> how would you handle the delay in the task?
+
+If i think that there would be delay in my task due to some blockers then i will inform the responsible person or manager quickly. if there is another reason then i will communicate my manager ASAP. I will try to most imortant things first. But still I will spend some extra time to meet the deadline. If my team member is dealing with the same kind of situation then i will also help him after doing my work.
+
+
+=> time when you experience the failure:
+
+1. at the inital phase of my carreer i made one mistake on server. there was a local changes someone made on server and i nneded to deploy the task on urgent basis. That time i only had a baisc kowledge of the git. So when i was taking the pull on the server side it was shwoing need to removed local changes. from stack overflow i got command to reset the local changes. so i used that command and removed the changes and made the deployment. So the changes from the server got vanished. so that time i realize that to work with server i need to learn commands, specially  in git, understand the commands before applying them direclty, and the best practice for the version control. then i started doing everything with command specially with git
+
+2. early on,when started ai to speed things up. i relied too much on generated code and didnt fully reivied the logic. testing showed some edge case were missed. i fixed the issues, added more thora testing and code reviees. i leanred to treat the ai as a tool not a replacement. not relie blindly

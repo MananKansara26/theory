@@ -92,3 +92,131 @@ Which service is slow?
 Where did the request fail?
 How long did each service take?
 Common tools include Jaeger and Zipkin.
+
+
+
+
+1. Saga Orchestration
+There is a central coordinator (Orchestrator) that tells every service what to do.
+┌──────────────────┐
+│ Saga Orchestrator│
+└────────┬─────────┘
+          │
+1. Create Order
+          ↓
+┌────────────────┐
+│ Order Service  │
+└───────┬────────┘
+          │
+     SUCCESS
+          ↓
+┌────────────────┐
+│Saga Orchestrator│
+└───────┬────────┘
+          │
+2. Charge Payment
+          ↓
+┌────────────────┐
+│ Payment Service│
+└───────┬────────┘
+          │
+     SUCCESS
+          ↓
+┌────────────────┐
+│Saga Orchestrator│
+└───────┬────────┘
+          │
+3. Reserve Inventory
+          ↓
+┌─────────────────┐
+│Inventory Service│
+└─────────────────┘
+
+The orchestrator knows the entire workflow:
+Order
+  ↓
+Payment
+  ↓
+Inventory
+  ↓
+Complete Order
+
+If something fails:
+Order ✅
+  ↓
+Payment ✅
+  ↓
+Inventory ❌
+  ↓
+Orchestrator
+  ↓
+Refund Payment
+  ↓
+Cancel Order
+So the orchestrator controls both the forward flow and compensation.
+
+
+2. Saga Choreography
+There is no central coordinator. Services communicate using events.
+┌────────────────┐
+│ Order Service  │
+└───────┬────────┘
+        │
+        │ OrderCreated
+        ↓
+   ┌────────────┐
+   │ Event Bus  │
+   └──────┬─────┘
+          │
+          ↓
+┌──────────────────┐
+│ Payment Service  │
+└────────┬─────────┘
+         │
+         │ PaymentCompleted
+         ↓
+    ┌────────────┐
+    │ Event Bus  │
+    └──────┬─────┘
+           │
+           ↓
+┌───────────────────┐
+│ Inventory Service │
+└─────────┬─────────┘
+          │
+          │ InventoryReserved
+          ↓
+     ┌────────────┐
+     │ Event Bus  │
+     └──────┬─────┘
+            │
+            ↓
+     Order Completed
+"When I receive this event, I'll do my job and publish another event."
+
+If something fails:
+Order
+  │
+  │ OrderCreated
+  ↓
+Payment
+  │
+  │ PaymentCompleted
+  ↓
+Inventory
+  │
+  │ InventoryFailed ❌
+  ↓
+Event Bus
+  │
+  ├──────────────→ Payment Service
+  │                     │
+  │                     ↓
+  │                  Refund
+  │
+  └──────────────→ Order Service
+                        │
+                        ↓
+                    Cancel Order
+In choreography, the service where the failure happens publishes a failure event, and other services react to that event by performing their compensating actions.
+Because there is no orchestratior that has the idea about the flow

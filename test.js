@@ -1,12 +1,9 @@
-const person = {
-  name: "Manan"
-};
-
-function greetings(time) {
-  console.log(`Hello ${this.name}, Good ${time}`);  
+function debouncing(fn, delay) {
+  let timer;
+  return function(...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      fn(...args)
+    }, delay)
+  }
 }
-
-greetings.call(person, "Morning")
-
-
-

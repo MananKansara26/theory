@@ -1,0 +1,322 @@
+AWS Lambda is serverless compute.
+
+You don't manage:
+EC2
+OS
+CPU allocation
+Server scaling
+Load balancer
+
+
+AWS Lambda functions can be triggered by a wide variety of AWS services, categorised by how the event is invoked (synchronously, asynchronously, or via stream/queue polling).
+
+1. Synchronous Triggers:
+The caller waits for the Lambda function to process the event and returns the response directly.
+Client
+   ↓
+API Gateway
+   ↓
+Lambda
+   ↓
+Database
+
+2. Asynchronous Triggers:
+AWS places the event in a queue, and Lambda handles it later. The caller does not wait for the result.
+AWS manages the internal event queue for you. You don't have to create an SQS queue yourself.
+Client
+  ↓
+Lambda
+  ↓
+[AWS internal event queue]
+  ↓
+Lambda execution
+  ↓
+Database
+AWS handles things like:
+buffering the event
+retrying failed invocations
+delivering the event to Lambda
+handling some failure scenarios
+So when you used an asynchronous Lambda invocation in the AWS Console without creating SQS, that's completely normal.
+
+3. SQS + Lambda (AWS internal queue ≠ SQS)
+Its an explicit queue-based asynchronous architecture.
+Here you own/configure the SQS queue.
+You can control things like: Visibility timeout, Message retention, Dead-letter queue, Batch size, Delay
+Why would I use SQS if Lambda already has an internal queue?
+Because SQS gives you much more explicit control over the messaging layer. You can inspect the queue, monitor backlog, configure retention, control batching, use DLQs, and have multiple systems interact with the queue depending on your architecture.
+With Lambda's async invocation. You don't directly interact with that internal queue.
+Client
+   ↓
+API Gateway
+   ↓
+Lambda 1
+   ↓
+SQS
+   ↓
+Lambda 2
+   ↓
+Database
+
+
+
+
+Lambda Cold / Warm Start:
+When Lambda hasn't been used recently, AWS may need to create a new execution environment.
+Request
+   ↓
+Create environment
+   ↓
+Load Node.js runtime
+   ↓
+Load dependencies
+   ↓
+Execute function
+This additional startup time is called a cold start.
+
+After the environment exists:
+Request
+   ↓
+Existing environment
+   ↓
+Execute function
+This is a warm invocation.
+
+Lambda doesn't explicitly decide "I will do a cold start" or "I will do a hot start."
+AWS decides whether it can reuse an existing execution environment.
+A cold start happens when Lambda needs an execution environment but doesn't have a suitable existing one to reuse.
+
+Example code:
+// This code runs when the Lambda execution environment is initialized.
+// It does NOT necessarily run for every request.
+console.log("🔥 INITIALIZING LAMBDA ENVIRONMENT");
+const dbConnection = createDatabaseConnection();
+let counter = 0;
+
+// This is the Lambda handler.
+// This runs for EVERY invocation.
+export const handler = async (event) => {
+    console.log("🚀 HANDLER STARTED");
+    counter++;
+    console.log("Counter:", counter);
+    const user = event.user;
+    const result = await dbConnection.query(
+        `SELECT * FROM users WHERE id = ${user.id}`
+    );
+    return {
+        statusCode: 200,
+        body: JSON.stringify(result)
+    };
+};
+
+
+=> What will happend if i invoke the 1M request to lamda at a same time?
+If you send 1 million requests to Lambda at the same time, Lambda does not put all 1M requests into one Lambda instance. Or it will also not create the 1M instance at a same time.
+
+Instead, Lambda uses concurrency + scaling and creates/reuses many execution environments.
+
+                 1,000,000 requests
+                         |
+                         v
+                    AWS Lambda
+                         |
+        +----------------+----------------+
+        |                |                |
+        v                v                v
+   Environment 1    Environment 2    Environment 3
+       ...              ...              ...
+        |                |                |
+        +----------------+----------------+
+                         |
+                  many environments
+
+One Lambda execution environment handles one invocation at a time.
+So lambda needs a very large number of execution environments to process them concurrently, subject to your account/function concurrency limits.
+
+Lambda has concurrency limits. Suppose, purely as an example, your available concurrency is 1000 then:
+1,000,000 requests
+        |
+        v
+Only ~1,000 can execute concurrently
+        |
+        v
+Remaining requests
+        |
+        v
+Wait / get throttled depending on invocation model
+
+
+Imagine Lambda can initially run 1,000 concurrent invocations.
+You suddenly send 1,000 requests:
+1000 requests
+     |
+     v
+1000 execution environments
+If there aren't already warm environments available:
+Environment 1 → cold
+Environment 2 → cold
+Environment 3 → cold
+...
+Environment 1000 → cold
+So you could have a large burst of cold starts at the begining.
+After those environments are initialized:
+Environment 1 → warm
+Environment 2 → warm
+...
+Environment 1000 → warm
+Future traffic may reuse them.
+
+Concurrency = the number of requests/invocations being processed at the same time.
+Concurrency ≈ Request rate × Average duration
+The confusion is that "request rate" means a sustained arrival rate, not "number of requests in one burst."
+If requests are continuously arriving at a certain rate, how many requests will be in-flight at the same time?
+
+100 requests/sec
+×
+5 sec average duration
+=
+~500 concurrent executions
+
+
+Lambda scales horizontally by creating execution environments, but it is bounded by concurrency quotas and scaling limits. Each concurrent invocation generally requires its own execution environment, so a sudden large burst can cause many cold starts. If the concurrency limit is reached, additional invocations are throttled or queued depending on the invocation architecture. For predictable startup latency, I can use Provisioned Concurrency, but I still need to design around concurrency limits and downstream capacity.
+
+
+
+=> Lamda + DB Connection:
+Lambda can scale to hundreds/thousands of concurrent execution environments, and each environment can potentially create a database connection. Your database has a finite connection limit.
+So you don't want every Lambda invocation to blindly do:
+request
+   ↓
+new DB connection
+   ↓
+query
+   ↓
+close connection
+
+1. Basic approach: create connection outside the handler
+import mysql from "mysql2/promise";
+const pool = mysql.createPool({
+    ... connectionParams
+    connectionLimit: 5
+});
+export const handler = async (event) => {
+    const [rows] = await pool.query(
+        "SELECT * FROM users WHERE id = ?",
+        [event.userId]
+    );
+    return {
+        statusCode: 200,
+        body: JSON.stringify(rows)
+    };
+};
+For the above exmaple practically pool is not needed in lamda function. as every invocation performs exactly one DB operation synchronously. Also at a single time this connection will execute the single handler function. If hot start happend then it will happen for the new invocation.
+Where the pool becomes useful inside the lamda function? Imagine your handler does multiple DB operations in parallel:
+const [users, orders, payments] = await Promise.all([
+    pool.query("SELECT * FROM users WHERE id = ?", [event.userId]),
+    pool.query("SELECT * FROM orders WHERE user_id = ?", [event.userId]),
+    pool.query("SELECT * FROM payments WHERE user_id = ?", [event.userId])
+]);
+
+
+Now imagine 500 Lambda environments are executing at the same time.
+Lambda
+│
+├── Environment 1
+│      └── DB pool → up to 5 connections
+│
+├── Environment 2
+│      └── DB pool → up to 5 connections
+│
+├── Environment 3
+│      └── DB pool → up to 5 connections
+│
+├── ...
+│
+└── Environment 500
+       └── DB pool → up to 5 connections
+
+In the worst case: 500 × 5 = 2,500 DB connections
+Even though we use the single connection per environment, there will be 500 connections at a time
+
+Solution:
+If you're using AWS RDS/Aurora with Lambda, RDS Proxy is designed specifically for this problem.
+It works same as PG Bouncer
+                  Lambda
+                     |
+       +-------------+-------------+
+       |             |             |
+       ↓             ↓             ↓
+   Lambda Env A  Lambda Env B  Lambda Env C
+       |             |             |
+       +-------------+-------------+
+                     |
+                     ↓
+                RDS Proxy
+                     |
+              Connection Pool
+                     |
+                     ↓
+                 RDS/Aurora
+Instead of every Lambda environment directly creating lots of DB connections, the proxy manages a pool of connections to the database and can reuse them. AWS recommends RDS Proxy for Lambda workloads that make frequent short DB connections or open/close many connections.
+
+RDS Proxy as a middleman between Lambda and your database whose main job is managing database connections.
+
+1000 Lambda environments
+          |
+          ↓
+    1000 DB connections
+          |
+          ↓
+         RDS
+
+
+With RDS Proxy
+1000 Lambda environments
+          |
+          ↓
+      RDS Proxy
+          |
+          ↓
+         RDS
+The proxy maintains a pool of database connections.
+Lambda
+  |
+  | 1000 application requests
+  ↓
+┌───────────────────┐
+│    RDS Proxy      │
+│                   │
+│ DB Conn 1         │
+│ DB Conn 2         │
+│ DB Conn 3         │
+│ ...               │
+│ DB Conn 100       │
+└───────────────────┘
+          |
+          ↓
+         RDS
+
+
+
+
+
+
+
+
+
+Client
+   │
+   │ Request + JWT/API Key
+   ↓
+API Gateway
+   │
+   ↓
+Lambda Authorizer
+   │
+   ├── ❌ Deny → 401/403
+   │
+   └── ✅ Allow
+          ↓
+     Business Lambda
+          ↓
+       Database

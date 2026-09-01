@@ -1,0 +1,180 @@
+A URL shortener converts a long URL into a unique short URL. For example, https://example.com/products/category/mobile/12345 could become https://short.ly/aB72xK. When a user accesses the short URL, the system resolves the short code to the original URL and redirects the user.
+
+The system has two primary operations:
+
+1. POST /api/urls
+        ↓
+Generate unique short code
+        ↓
+Store shortCode → originalUrl
+        ↓
+Return short URL
+
+2.GET /:shortCode
+        ↓
+Find original URL
+        ↓
+302/301 Redirect
+
+
+=> High-level architecture:
+Client → Load Balancer → API servers (Node.js/Express) 
+                              │
+                    ┌─────────┼─────────┐
+                    │                   │
+              Write path            Read path
+                    │                   │
+              Key Generation      Cache (Redis) 
+              Service / Counter        │ miss
+                    │                   ▼
+                    └──────────► Primary DB (+read replicas)
+                                        │
+                              Async: Analytics queue (Kafka/SQS)
+                                        → Analytics DB
+
+
+Why Redis?
+URL shorteners are generally read-heavy.
+So we can cache: shortCode → originalUrl
+Then most redirects don't need to hit PostgreSQL.
+
+
+=> Database design
+CREATE TABLE urls (
+    id BIGSERIAL PRIMARY KEY,
+    short_code VARCHAR(10) UNIQUE NOT NULL,
+    original_url TEXT NOT NULL,
+    user_id BIGINT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    expires_at TIMESTAMP NULL,
+    click_count BIGINT DEFAULT 0
+);
+CREATE UNIQUE INDEX idx_urls_short_code
+ON urls(short_code);
+
+
+
+=> How do we generate the short code?
+
+a) Base62 encode an auto-increment ID
+- DB (or Redis INCR) gives you a unique integer, encode it in base62 (a-zA-Z0-9) → 7 chars covers 62^7 ≈ 3.5 trillion combos
+- Simple, no collisions, but reveals ordering/predictable (someone can guess sequential codes) and creates a single point of write contention if using a plain DB auto-increment
+
+b) Hash-based (MD5/SHA256 of URL, truncate to 6-7 chars)
+- Same URL → same hash, need collision handling (append salt or check-and-retry)
+- Distributes writes better, no central counter bottleneck
+
+c) Pre-generated key pool
+- A background worker generates batches of random unique codes ahead of time, stores in a "unused keys" table/queue
+- Shorten service just pops a key — avoids collision checks at request time, very fast writes
+- This is the approach real systems (Bitly-style designs) often use in interviews — worth mentioning as the "production-grade" answer
+
+The actual decision, boiled down:
+Predictability is the first thing to flag with (a) — if codes are sequential, anyone can enumerate short.ly/1000001, 1000002, 1000003... and scrape every URL in your system. You'd need to offset/shuffle the counter to hide this, which is a real weakness worth mentioning unprompted in an interview.
+
+(b)'s appeal is the "free" deduplication, but that benefit is bought with unpredictable, sometimes-multiple DB round-trips sitting inside the request a user is waiting on. It's the only one of the three where write latency is variable — most requests are fast, but you don't have a hard guarantee, which is a bad property for a hot write path at scale.
+
+(c) wins on the property that actually matters most at scale: it makes write latency flat and cheap, by moving all the "hard part" (generating something guaranteed-unique) to a background process nobody's waiting on. The cost is operational — you now own a small pipeline (worker + watermark + pool table) instead of an algorithm.
+
+=> Implementation:
+
+code generation:
+app.post("/api/urls", async (req, res) => {
+    const { url } = req.body;
+
+    // 1. Validate URL
+
+    // 2. Generate short code
+
+    // 3. Store in database
+
+    // 4. Cache if required
+
+    res.json({
+        shortUrl: `https://short.ly/${shortCode}`
+    });
+});
+
+Redirect API:
+Client
+   ↓
+Node.js
+   ↓
+Redis
+   ↓
+Found?
+ ┌─┴──────┐
+Yes       No
+ ↓         ↓
+URL      PostgreSQL
+ ↓         ↓
+Redirect  Redis
+           ↓
+        Redirect
+
+ return res.redirect(302, originalUrl);
+
+Redirect: 301 vs 302
+302 (temporary) lets you keep controlling traffic through your server and gather analytics on every hit — usually the right choice for a URL shortener even though 301 is cacheable by browsers (which would reduce your server hits but you lose click tracking)
+
+
+=> how to use use redis to store the value?
+key:   url:abc123
+value: {"longUrl":"https://example.com/page","expiresAt":null}
+
+Why a string holding JSON, not a Redis Hash (HSET)? Because you always read the whole record at once (you never need just the URL without also checking expiry) — a single GET is one round-trip, whereas a Hash would need HGETALL. For this access pattern, string+JSON is simpler and just as fast.
+
+
+
+
+
+
+=>why base62 encoding:
+Base62 encoding is a way of representing binary data or numbers using a set of 62 alphanumeric characters:
+0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz
+Some implementations use a different order, such as lowercase before uppercase.
+
+why not base64:
+Base62 uses only A-Z, a-z, and 0-9, so the generated code is URL-friendly and doesn't contain characters like +, /, or = that can have special meanings in URLs.
+Standard Base64 contains +, /, and =. These characters can have special meanings in URLs, so we'd need Base64URL or additional encoding. Base62 avoids that by using only alphanumeric characters. Base64URL is also a valid choice, but Base62 is simpler and very convenient when we're converting numeric IDs into short URL keys
+
+algorithm example: 
+convert it : 123456
+123456 ÷ 62 = 1991 remainder 14
+1991   ÷ 62 = 32   remainder 7
+32     ÷ 62 = 0    remainder 32
+Read remainders from bottom to top: 32 7 14
+character values:
+0-9  → 0-9
+A-Z  → 10-35
+a-z  → 36-61
+Using our alphabet:
+32 → W
+ 7 → 7
+14 → E
+So result is : 123456 → "W7E"
+
+
+
+=> collision problem in hash based short code
+Two different "collisions" in hash-based generation:
+1. Same URL shortened twice — not a real collision, it's expected.
+2. this is the actual collision problem, and it's the one you need to handle. It happens because you're not using the full hash (that'd be 32+ characters, way too long for a short URL) — you're truncating it to like 7 characters, and once you throw away most of the hash, different inputs can land on the same 7 chars.
+
+md5("https://example.com/page-A") = 5d41402abc4b2a76b9719d911017c592
+                                     └───truncate to 7────┘
+                                     = "5d41402"
+
+md5("https://totally-different.com/xyz") = 5d41402fff9999888877776666555
+                                            └───truncate to 7────┘
+                                            = "5d41402"   ← same!
+
+solution:
+1.First attempt: hash the raw URL. Check DB for that code.
+2.If free → done, use it.
+3.If taken by the same URL → it's a repeat request, just return that code (dedup, not collision).
+4.If taken by a different URL → genuine collision. Now append a salt (url + "::1", then url + "::2"...) and re-hash — this gives you a completely different hash each time, since MD5 output changes drastically even for a tiny input change (avalanche effect).
+5.Repeat until you find an unused code, or give up after N attempts (if you're hitting 5 collisions in a row, something's wrong — pool exhaustion or an attack — better to fail loudly than loop forever).
+
+whats the drawback?
+Notice what just happened to your request latency: in the worst case, this is N sequential DB round-trips inside a single write request before you even get to the actual INSERT. That's exactly the cost I mentioned earlier — this collision loop sits directly in the user's critical path, whereas the pre-generated pool approach does zero DB checks on the hot path.

@@ -1,0 +1,268 @@
+Reference video: https://www.youtube.com/watch?v=WdyiUe7_3cA
+
+Step-1: Brain Dump
+1. Leadership/Initiative
+2. Resiliance - overcoming challanges/failure
+3. Teamwork
+4. Influencing/Persuation 
+5. Ethical/Moral Conflict
+For each point at lease prepare two stories
+
+Step-2: Craft your answer
+STAR Pattern
+S - Situation
+T - Task
+A - Action
+R - Result
+Try to make stories that will create good impact
+
+Step-3: Practice Delivery
+How to avoid sounding "Scripted"
+- bullet points
+- record yoursefl
+- remove filler words
+
+
+
+=> How do you handle conflict with a client or project manager?
+Best structure to remember: Understand → Explain impact → Offer solution → Align → Document
+
+Example 1 : HealthRay — Hospital wants customized functionality (Best answer)
+
+Situation
+A hospital wanted functionality different from the standard production behavior.
+The hospital was an important/high-value customer.
+Business decided to create a separate branch/custom implementation.
+
+Your concern
+Separate organization-specific branch means:
+- code duplication
+- difficult bug fixes
+- difficult deployments
+- future merges become complicated
+- maintenance cost increases
+More customers could potentially ask for similar customizations.
+
+Action
+Instead of simply rejecting the idea:
+Explained the long-term maintenance risk.
+Suggested making the functionality configurable.
+Example:
+- organization-level configuration
+- feature flag
+- tenant-specific settings
+- permission/configuration-based behavior
+Keep one codebase.
+Enable/disable the behavior based on organization configuration.
+
+Result
+Customer gets the required functionality.
+No separate codebase/branch needed.
+Future changes remain easier to maintain.
+Other customers can potentially use the same capability through configuration.
+
+"I didn't want to choose between business requirements and engineering quality. I tried to find a solution where we could satisfy the customer while keeping a single maintainable codebase."
+
+Example 2 — Client changing requirements
+Don't say "it was due to the requirement increment" in a way that sounds like you're blaming the client.
+
+Situation: Client gave a requirement with a fixed deadline.
+Started development based on the initial scope.
+During development, client kept adding/changing requirements.
+Action: I didn't directly reject the changes.
+Explained how the additional requirements would affect the timeline and existing scope.
+Discussed which requirements were critical for the current release.
+Suggested either:
+1.prioritize the new requirements, or
+2.move them to the next release.
+Kept the client/project manager updated about the revised timeline.
+Result: We aligned on priorities instead of compromising the quality.
+Learning: Requirement changes are normal, but they need scope and timeline management.
+
+I don't treat conflict as an argument. I first try to understand the reason behind the request, explain the technical or timeline impact, and then propose options.
+
+Example 3 - Conflict with Project Manager — RequestWeed
+But be careful with saying: "I told my manager I need to write maintainable code." That can sound like you're prioritizing engineering preferences over business deadlines.
+
+Situation: RequestWeed was in the initial development stage.
+Manager wanted the feature completed quickly because of the deadline.
+I understood the urgency and business requirement.
+Concern: The initial architecture/code structure would become the foundation for future features.
+If we rushed the foundation:
+1. more technical debt
+2. harder maintenance
+3. slower future development
+Action: Explained the trade-off to the manager.
+Proposed spending some additional time on the initial setup/architecture.
+Once the foundation was ready, feature development would become much faster.
+Focused on minimum necessary structure, not over-engineering.
+Result: We maintained a good foundation while continuing development toward the deadline.
+
+I wasn't trying to delay the feature; I was trying to avoid creating technical debt at the foundation of the project.
+
+
+
+=> When did you demonstrate leadership skills?
+
+Leadership ≠ being a manager.
+For a 4-year developer, leadership can mean:
+identifying problems proactively
+taking ownership
+helping teammates
+improving processes
+finding cost-saving solutions
+taking initiative without being asked
+
+Example 1 : Frigid AI / MongoDB optimization
+
+Situation: While working on Frigid AI, I noticed some MongoDB aggregation queries were taking too long.
+
+I had previous experience working heavily with MongoDB aggregations.
+Identified potential optimization opportunities.
+At that time, I had an urgent assigned task, so I didn't abandon my priority task.
+I noted the potential improvements.
+Once my assigned work was completed and I had some capacity:
+- discussed it with the manager
+- prioritized the issues
+- optimized the queries one by one
+
+Result:
+improved query performance
+reduced unnecessary database processing
+received positive feedback from the client/team.
+Leadership point: I didn't wait for someone to assign the problem to me.
+
+Strong opening: "For me, leadership is also about identifying problems outside my immediate task and taking ownership of them when the priority allows."
+
+Example 2 : RequestWeed — Saving client's money
+
+Situation: Client was paying for a third-party scraping service.
+While working/checking the website, I noticed the website was exposing the required data through a public API.
+Instead of continuing with the paid scraping approach:
+- investigated the API
+- tested it using Postman
+- understood the required request/response structure
+Within roughly half a day, created a small solution using the API.
+Demonstrated it to the client.
+Client was happy.
+Result: Reduced dependency on the paid scraping service and helped save the client money.
+Leadership: Proactively looked beyond my assigned implementation and found a better solution.
+
+
+
+=> Tell me about a time you experienced failure
+
+Example 1 — Git/server mistake
+
+Situation:
+Early in my career, I had limited experience with Git/server management.
+There were some local changes on the server.
+I had an urgent deployment to perform.
+While pulling the latest changes, Git indicated that local changes were preventing the pull.
+
+Mistake:
+I searched for a solution online.
+Found a command that would reset the local changes.
+I used it without fully understanding its impact.
+The existing server-side changes were lost.
+
+Action:
+I immediately understood that I had made a mistake.
+Focused on restoring the required state and completing the deployment safely.
+After that incident, I changed how I worked with production servers.
+
+Learning:
+Never run a command in production just because it appears in Stack Overflow.
+Understand the command and its impact first.
+Follow proper Git/version-control practices.
+Avoid making manual/untracked changes on servers.
+Use proper deployment/version-control processes.
+
+"It was an early-career mistake, but it changed my approach to production work. Today, I don't blindly execute commands in production; I first understand the impact and use a controlled deployment process."
+
+Example 2 : AI-generated code failure
+AI-assisted development → insufficient review → missed edge cases → improved process
+
+Situation: I started using AI tools to speed up development.
+
+Initially, I trusted some generated code more than I should have.
+I didn't review every part of the generated logic deeply enough.
+During testing/review, some edge cases were discovered.
+Action:
+- fixed the issues
+- added more comprehensive test cases
+- reviewed the generated code more carefully
+- validated business logic independently
+Learning:
+AI is a productivity tool, not a replacement for engineering judgment.
+Developer is still responsible for:
+- architecture
+- correctness
+- security
+- edge cases
+- testing
+Current approach: I use AI to accelerate implementation, but I review and validate the output before considering it production-ready.
+
+"The main lesson for me was that faster code generation doesn't necessarily mean faster delivery. Correctness and validation are still my responsibility."
+
+
+=> How did you handle the conflict with the team member?
+understand → discuss → explain trade-off → try to align → escalate only when necessary → maintain relationship.
+
+Situation:
+While working at Healthray, I had a disagreement with a frontend developer.
+He wanted to reuse the existing listing API and return all the additional data needed for the page.
+My concern was that the listing API was already costly/heavy.
+
+Understand:
+First, I understood his concern.
+Reusing the existing API would mean:
+less frontend/backend changes
+faster implementation
+simpler flow from his perspective.
+
+My concern:
+Adding more data to the existing listing API would make an already expensive API even heavier.
+It could increase:
+response time
+database/query cost
+unnecessary data transfer
+impact on other users/features using the same API.
+
+Action:
+I explained these consequences to him rather than simply saying his approach was wrong.
+Suggested creating a separate API specifically for the additional data.
+We discussed the trade-off.
+He still preferred the existing approach.
+Since we couldn't reach an agreement and it could impact the system, I discussed the technical trade-off with the manager.
+
+Result:
+Manager agreed that separating the API was the better approach.
+We proceeded with the more appropriate solution.
+I maintained a good working relationship with the teammate; the disagreement was about the technical approach, not the person.
+
+Learning:
+Technical disagreements are normal in a team.
+First try to resolve them directly with the person.
+Use technical reasoning/data, not personal opinions.
+Escalate only when the disagreement can materially affect the project/system.
+Strong opening pattern
+
+"I believe conflict with a team member should be handled through technical discussion rather than making it personal. I first try to understand their reasoning, explain my concern with the impact, and find a solution we both agree on."
+
+=> How would you handle a delay in your task?
+Identify early → Communicate → Prioritize → Solve → Support
+"The biggest mistake is communicating a delay only when the deadline has already arrived."
+
+First, I try to identify potential blockers as early as possible.
+If I realize the deadline may be affected, I communicate it to the manager/stakeholder early rather than waiting until the deadline.
+Explain:
+- what is blocking me
+- expected impact
+- what I have already tried
+- what support I need
+Re-prioritize tasks based on business impact.
+If possible, break the task into smaller deliverables.
+Put extra effort/time when necessary to recover the delay.
+If another team member has a similar blocker and my priority work is completed, I help them as well.
+Goal: Don't surprise the team at the last moment.

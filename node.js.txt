@@ -214,3 +214,39 @@ process.cwd()  -> /
 
 => What happens if 100 users hit a single Node.js server at the same time?
 Node.js receives all requests through its event loop. For database operations, requests use connections from the MongoDB connection pool. If the pool has fewer connections than concurrent requests, some requests wait in the driver's queue until a connection becomes available. Node.js can continue processing other asynchronous operations while waiting for I/O, but CPU-heavy operations can block the event loop.
+
+
+=> Thread Pool:
+A thread pool is a group of worker threads that wait for tasks to execute in the background.
+Instead of creating a new thread every time a task arrives (which is expensive), the runtime reuses a fixed number of threads.
+
+JavaScript runs on a single main thread. If JavaScript itself had to read the file, it would be blocked until the file finished reading.
+Instead, Node.js delegates the work to libuv's thread pool.
+Main Thread
+     │
+     ▼
+Request: Read File
+     │
+     ▼
+Thread Pool
+     │
+     ▼
+Reads file in background
+     │
+     ▼
+Returns result
+     │
+     ▼
+Event Loop executes callback
+This keeps the main thread free to handle other requests.
+By default, libuv creates 4 worker thread
+
+Which Node.js operations use the thread pool?
+File system, Cryptography, Compression, Some DNS lookups
+
+Which operations do NOT use the thread pool?
+http.createServer()
+fetch()
+TCP sockets
+WebSockets
+These are handled efficiently by the OS and coordinated through the Event Loop.

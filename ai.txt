@@ -1,0 +1,111 @@
+=> LLM (Large Language Model):
+An LLM is a machine learning model trained on large amounts of text that can understand prompts and generate human-like responses. In applications, we typically access it through an API rather than training it ourselves.
+A model that understands and generates human language.
+Examples: GPT-5, Claude, Gemini, Llama
+
+=> Prompt:
+The instruction sent to the LLM.
+ex: Summarize this document in 5 bullet points.
+
+=> Prompt Engineering:
+Writing prompts in a way that gets better responses.
+Poor Prompt: 
+Explain Node.js
+Better Prompt: 
+Explain Node.js for a backend developer with 3 years of experience.
+Give real-world examples.
+
+=> Token:
+A token is roughly a piece of text.
+Hello world may become "Hello" and "World". 2 tokens.
+Long prompts consume -> More tokens -> Higher cost -> Longer response time.
+Three main token categories:
+1. Input tokens (prompt tokens)
+2. Output tokens (completion tokens)
+3. Processing / reasoning tokens
+
+Every LLM has a maximum context size.
+Model context window: 128k tokens
+It means total token should fit in the context window
+Total tokens =
+Input tokens
++ Conversation history tokens
++ Retrieved documents (RAG) tokens
++ System instructions tokens
++ Output tokens
+
+Does previous chat history increase cost? Yes.
+
+=> Context Window:
+Maximum tokens the model can remember during one conversation.
+Prompt + Previous messages + Response
+
+=> Temperature: 
+Controls randomness.
+Temperature = 0 : Very deterministic.
+Good for: Code, SQL, JSON
+Temperature = 1 : Creative
+Good for: Stories, Brainstorming
+
+
+AI ⟶ Generative AI ⟶ LLM
+
+AI (Artificial Intelligence):
+AI is the broad field of making computers perform tasks that normally require human intelligence
+Examples:
+Detecting spam emails
+Recommending movies
+Recognizing faces
+Predicting stock demand
+
+Generative AI (Gen AI):
+Generative AI is a type of AI whose job is to generate new content.
+It can create: Text, Images, Videos, Music, Code
+Examples:
+ChatGPT writes an email.
+An AI creates an image from a prompt.
+An AI generates a song.
+
+3. LLM (Large Language Model:
+An LLM is a specific kind of Generative AI that works with language.
+Its specialty is understanding and generating text.
+Examples of what an LLM can do: 
+Answer questions
+Summarize documents
+Translate languages
+Write code
+Explain concepts
+Write stories
+
+Langchain:
+LangChain is a framework that helps you build applications around LLMs.
+LangChain is a toolkit that helps you build AI applications where an LLM can reason, use information from different sources, and perform tasks.
+It is a toolbox/framework that can build many workflows
+Why do we need LangChain?
+A normal LLM (like ChatGPT) has limitations:
+It only knows information from its training data.
+It may not know your company's private documents.
+It cannot automatically interact with your database or APIs.
+It does not remember previous interactions unless memory is added.
+LangChain helps solve these problems by providing components to connect the LLM with other systems
+https://www.youtube.com/shorts/VsPOQd1eSXM
+LangChain can help you build:
+RAG systems
+AI agents
+Chatbots with memory
+Multi-step workflows
+AI assistants that call APIs
+Document analyzers
+
+Model Context Protocol (MCP): 
+is an open protocol introduced by Anthropic that standardizes how AI applications connect to external tools, databases, file systems, APIs, IDEs, and other services.
+An MCP Server exposes tools or data to an AI.
+LLM
+ |
+ | speaks MCP
+ |
+ -------------------------
+ |      |       |        |
+GitHub  DB    Slack    Files
+MCP     MCP    MCP     MCP
+Server  Server Server  Server

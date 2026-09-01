@@ -1,0 +1,10 @@
+Benifits of RAG:
+Higher Accuracy
+Less Hallucination(misleading)
+Cost effective: if we pass entire context then we are spending too many tokens. so send less but relevant knowledge
+
+RAG Categories:
+1. Vector RAG
+2. Vector-less RAG
+
+Embeding: converting text into vector such that it can represent its meaning

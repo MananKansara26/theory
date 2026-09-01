@@ -1,0 +1,730 @@
+GraphQL is an API query language and runtime that allows the client to request exactly the data it needs from the server.
+It was developed by Facebook and is now maintained by the GraphQL Foundation.
+
+REST tells the server which resource/endpoint you want. GraphQL lets the client describe the exact shape of data it wants.
+
+GraphQL is a query language for your API, and a server-side runtime for executing queries using a type system you define for your data
+
+GraphQL is a specification/query language. Apollo is a popular implementation and ecosystem built around GraphQL.
+
+Facebook invented Graphql. Facebook created GraphQL because their mobile application had complex and interconnected data, and REST was sometimes causing too many API calls and unnecessary data transfer. GraphQL allowed them to fetch related data in a single request and request only the fields they actually needed.
+
+Thinking in graph:
+1. describe your data
+2. ask what you want
+3. get predictable result
+
+GraphQL stands for Graph Query Language. It's called GraphQL because it represents data and their relationships as a graph, allowing clients to traverse those relationships and query exactly the fields they need.
+
+
+Benifits of graphql:
+1. overfatching
+2. underfatching: need to call one api having less data. need to call another api to fetch all the information
+Strongly typed
+3. Excellent frontend flexibility: Different clients can request different data.
+Mobile app → name, profileImage
+Web app → name, email, address, orders
+Admin panel → name, email, permissions, auditLogs
+4. Self-documenting: GraphQL schemas can be introspected, which enables tools such as GraphQL Playground/Apollo Studio to provide documentation and autocomplete.
+Excellent for complex relationships
+5. Excellent for complex relationships
+
+Disadvantage of graphql:
+1. More complex backend
+2. N+1 query problem: N+1 happens when GraphQL fetches a list of N parent records with one query and then executes another database query for each parent to fetch nested data. For example, fetching 100 users requires 1 query for users plus 100 queries for their posts. This creates 101 database queries. We commonly solve this using DataLoader, which batches those individual requests into a single query using something like WHERE user_id IN (...) and can also cache repeated requests.
+Dataloader is not feature of graphql rather its just a concept to overcome the N+1 query problem.
+1 parent query + N child queries = N+1 problem
+DataLoader: 1 parent query + 1 batched child query = much better
+3. Caching is more complicated: HTTP/CDN/browser caching can be straightforward. Graphql use the same endpoint therefore traditional HTTP caching becomes more complicated.
+4. Query complexity/security: The client controls the query. A malicious client could potentially send something extremely expensive. 
+Therefore production GraphQL APIs often need:
+Query depth limiting
+Query complexity analysis
+Rate limiting
+Persisted queries
+Authentication/authorization
+Introspection controls depending on environment
+5. Monitoring becomes harder: With GraphQL, Everything may hit the same endpoint. So you need better query-level observability.
+
+
+
+AST is the structured representation of a GraphQL query after GraphQL parses the query string.
+AST means Abstract Syntax Tree.
+
+Query → AST
+query {
+  user(id: "123") {
+    name
+    email
+  }
+}
+
+Document
+└── OperationDefinition
+    └── SelectionSet
+        └── Field: user
+            ├── Argument
+            │   ├── name: id
+            │   └── value: "123"
+            │
+            └── SelectionSet
+                ├── Field: name
+                └── Field: email
+
+
+The AST makes this information structured and easy to process.
+GraphQL Query
+     ↓
+   Parser
+     ↓
+    AST
+     ↓
+ Validation
+     ↓
+ Execution
+     ↓
+ Resolvers
+     ↓
+ Database / Services
+
+AST stands for Abstract Syntax Tree. When a GraphQL query reaches the server, the GraphQL parser converts the query string into an AST, which represents the query as a structured tree of operations, fields, arguments, and selections. GraphQL then uses this structure during validation and execution. AST can also be used for things like query complexity analysis, authorization, and inspecting requested fields
+
+AST is not a GraphQL feature like Query or Mutation. It's a general compiler/parser concept that GraphQL uses to understand and process queries.
+
+
+=> Type language
+GraphQL services can be written in any language and there are many different approaches you can take when defining the types in a schema:
+
+1. Define schema using programming language:
+const UserType = new GraphQLObjectType({
+  name: "User",
+  fields: {
+    name: { type: GraphQLString },
+    age: { type: GraphQLInt }
+  }
+});
+I'll create my GraphQL types using JavaScript.
+
+2. Define schema using SDL:
+You write:
+type User {
+  id: ID!
+  name: String!
+  age: Int
+}
+Then separately write JavaScript resolvers:
+const resolvers = {
+  User: {
+    name: (user) => user.name,
+    age: (user) => user.age
+  }
+};
+SDL → describes WHAT the API looks like
+Resolvers → describe HOW to get the data
+This is the approach you'll commonly see with Apollo Server.
+
+3. Write resolvers and infer the schema:
+Instead of explicitly writing the SDL, some libraries let you write functions/classes and use annotations or metadata to figure out the GraphQL schema.
+For example, frameworks such as TypeGraphQL can do this.
+@ObjectType()
+class User {
+  @Field()
+  name: string;
+}
+The library generates something equivalent to:
+type User {
+  name: String!
+}
+
+4. Infer everything from a data source:
+Some tools can look at an existing database/data source and automatically generate the GraphQL types and resolvers.
+For example:
+Database
+   ↓
+GraphQL library
+   ↓
+Schema + Resolvers
+   ↓
+GraphQL API
+You don't manually define everything.
+One example of this idea is Hasura. You connect Hasura to your PostgreSQL database:
+PostgreSQL Database
+        ↓
+      Hasura
+        ↓
+   GraphQL API
+Hasura can expose that database through GraphQL automatically.
+query {
+  users {
+    id
+    name
+    email
+  }
+}
+Hasura can eliminate a lot of boilerplate CRUD/data-access code, but custom application/business logic still belongs somewhere.
+You can use the database-driven approach for the boring data-access work and keep custom logic in your application layer. Can use both at the same time
+
+
+All arguments are named. Unlike languages such as JavaScript and Python where functions take a list of ordered arguments, all arguments in GraphQL are passed by name specifically.
+
+Every GraphQL schema must support query operations. The entry point for this root operation type is a regular Object type called Query by default. 
+query, mutation, and subscription themselves are operation types/keywords, while Query, Mutation, and Subscription are the corresponding root object types.
+
+There are six kinds of named type definitions in GraphQL: Object, Scalar, Enum, Interface, Union, and Input Object types
+
+GraphQL names are case-sensitive. However, keywords such as type, interface, union, scalar, etc. are GraphQL syntax keywords and must be written in lowercase:
+
+=> Scalar types:
+GraphQL comes with a set of default Scalar types out of the box:
+Int: A signed 32‐bit integer.
+Float: A signed double-precision floating-point value.
+String: A UTF‐8 character sequence.
+Boolean: true or false.
+ID: A unique identifier, often used to refetch an object or as the key for a cache. The ID type is serialized in the same way as a String; however, defining it as an ID signifies that it is not intended to be human‐readable.
+
+In most GraphQL service implementations, there is also a way to specify custom Scalar types. For example, we could define a Date type: scalar Date
+
+Enum types, also known as enumeration types, are a special kind of scalar that is restricted to a particular set of allowed values. This allows you to:
+
+
+Type modifiers:
+Types are assumed to be nullable and singular by default in GraphQL.
+GraphQL supports two type modifiers—the List and Non-Null types—and they can be used individually or in combination with each other.
+1. Non-Null
+2. List
+As we see above, the Non-Null and List modifiers can be combined. 
+
+For example, you can have a List of Non-Null String types:
+
+myField: [String!] : This means that the list itself can be null, but it can’t have any null members. For example, in JSON:
+myField: null // valid
+myField: [] // valid
+myField: ["a", "b"] // valid
+myField: ["a", null, "b"] // error
+
+myField: [String]! : This means that the list itself cannot be null, but it can contain null values:
+myField: null // error
+myField: [] // valid
+myField: ["a", "b"] // valid
+myField: ["a", null, "b"] // valid
+
+myField: [String!]!: This means that the list cannot be null and it cannot contain null values:
+myField: null // error
+myField: [] // valid
+myField: ["a", "b"] // valid
+myField: ["a", null, "b"] // error
+
+[] would still be a valid response for a Non-Null List of a Non-Null type.
+
+
+Interface types:
+It is a abstract type
+a certain set of fields that a concrete Object type or other Interface type must also include to implement it.
+To ask for a field on a specific Object type, you need to use an inline fragment:
+{
+  hero(episode: JEDI) {
+    name
+    ... on Droid {
+      primaryFunction
+    }
+  }
+}
+Interface types may also implement other Interface types:
+interface Node {
+  id: ID!
+}
+interface Character implements Node {
+  id: ID!
+  name: String!
+  friends: [Character]
+  appearsIn: [Episode]!
+}
+While types may share common fields in a GraphQL API, that may not always warrant the use of an Interface type to enforce that those fields remain consistently named. Interface types are a powerful way to indicate shared behavior across the types that implement them. When used, they should be semantically meaningful to client developers, just like Character is a useful abstraction for humans and droids.
+
+
+Union types:
+GraphQL supports a second abstract type called a Union type. Union types share similarities with Interface types, but they cannot define any shared fields among the constituent types.
+Note that members of a Union type need to be concrete Object types; you can’t define one using Interface types or other Union types as members.
+
+
+The __typename field is a special meta-field that automatically exists on every Object type and resolves to the name of that type, providing a way to differentiate between data types on the client.
+
+
+Input Object types:
+The fields on an Input Object type can refer to other Input Object types, but you can’t mix input and output types in your schema. Input Object types also can’t have arguments on their fields.
+input ReviewInput {
+  stars: Int!
+  commentary: String
+}
+type Mutation {
+  createReview(episode: Episode, review: ReviewInput!): Review
+}
+
+
+Directives:
+A GraphQL directive is like an instruction or rule that you attach to a field, argument, or other part of a GraphQL query/schema.
+You write it using @ followed by its name.
+Think of a directive as a special instruction attached to something in GraphQL.
+Type system directives allow us to annotate the types, fields, and arguments in a schema so that they may be validated or executed differently.
+
+Common built-in directives include:
+@include → include a field only when a condition is true
+@skip → skip a field when a condition is true
+@deprecated → mark a field as no longer recommended
+@specifiedBy → specify the specification for a custom scalar
+
+
+Documentation:
+1. Descriptions:
+GraphQL allows you to add documentation to the types, fields, and arguments in a schema.
+"""
+A character from the Star Wars universe
+"""
+type Character {
+  "The name of the character."
+  name: String!
+}
+"""
+The episodes in the Star Wars trilogy
+"""
+enum Episode {
+  "Star Wars Episode IV: A New Hope, released in 1977." 
+  NEWHOPE
+  "Star Wars Episode V: The Empire Strikes Back, released in 1980."
+  EMPIRE
+  "Star Wars Episode VI: Return of the Jedi, released in 1983."
+  JEDI
+} 
+"""
+The query type, represents all of the entry points into our object graph
+"""
+type Query {
+  """
+  Fetches the hero of a specified Star Wars film.
+  """
+  hero(
+    "The name of the film that the hero appears in."
+    episode: Episode
+  ): Character
+}
+2. Comments:
+Occasionally, you may need to add comments in a schema that do not describe types, fields, or arguments, and are not meant to be seen by clients
+
+In GraphQL SDL, comments use # and are only notes for developers reading the schema—they are not part of the GraphQL schema and are not available through introspection. Documentation/descriptions use """ ... """ and are part of the schema, so GraphQL tools like GraphiQL can display them to API consumers. In short: # = internal developer note, """...""" = official API documentation.
+
+When creating a GraphQL document we always start with a root operation type (the Query Object type for this example) because it serves as an entry point to the API. From there we must specify the selection set of fields we are interested in, all the way down to their leaf values which will be Scalar or Enum types.
+
+You can even pass arguments into fields that output Scalar type. For example:
+{
+  human(id: "1000") {
+    name
+    height(unit: FOOT)
+  }
+}
+
+We can omit the query keyword when you're writing a query if you are using the default query operation and you don't need to name the operation.
+query {
+  human(id: "1000") {
+    name
+    height(unit: FOOT)
+  }
+}
+can be shortened to:
+{
+  human(id: "1000") {
+    name
+    height(unit: FOOT)
+  }
+}
+And this shorthand applies only to queries, not mutations or subscriptions.
+
+
+Aliases:
+you can’t directly query for the same field with different arguments. That’s why you need aliases—they let you rename the result of a field to anything you want.
+query {
+  empireHero: hero(episode: EMPIRE) {
+    name
+  }
+  jediHero: hero(episode: JEDI) {
+    name
+  }
+}
+
+
+Default variables:
+query HeroNameAndFriends($episode: Episode = JEDI) {
+  hero(episode: $episode) {
+    name
+    friends {
+      name
+    }
+  }
+}
+
+
+Fragment:
+a fragment is a reusable group of fields that you can define once and use in multiple queries. It is mainly useful when the same fields are requested in multiple places, so you don't have to repeat them.
+Fragments cannot be specified on any input value (scalar, enumeration, or input object).
+Example:
+fragment ProductCard on Product {
+  id
+  name
+  price
+  image
+  rating
+}
+query HomePage {
+  products {
+    ...ProductCard
+  }
+}
+query SearchProducts($keyword: String!) {
+  search(keyword: $keyword) {
+    ...ProductCard
+  }
+}
+Yes, you can mention a field again even if it already exists in the fragment. 
+query HomePage {
+  products {
+    ...ProductCard
+    name
+  }
+}
+GraphQL will not return name twice. The response will contain it only once
+If the same field is requested with different arguments, that's different:
+fragment ProductCard on Product {
+  price(currency: USD)
+}
+query {
+  products {
+    ...ProductCard
+    price(currency: INR)
+  }
+}
+
+Inline Fragments:
+If you are querying a field that returns an Interface or a Union type, you will need to use inline fragments to access data on the underlying concrete type.
+query HeroForEpisode($ep: Episode!) {
+  hero(episode: $ep) {
+    name
+    ... on Droid {
+      primaryFunction
+    }
+    ... on Human {
+      height
+    }
+  }
+}
+
+
+=> Schema introspection:
+__typename:	What type is this object?
+__schema:	give me information about the entire GraphQL API
+__type:	give me information about one particular type in that API
+So __typename is commonly used during normal application queries, while __schema and __type are mainly used for introspection, tooling, documentation, schema exploration, and code generation.
+Tools like GraphiQL, Apollo Studio, GraphQL Playground, and other GraphQL explorers use introspection to automatically discover your API's types, fields, arguments, documentation, etc.
+
+
+Multiple fields in mutations:
+A mutation can contain multiple fields, just like a query. There’s one important distinction between queries and mutations, other than the name:
+########## While query fields are executed in parallel, mutation fields run in series. ##########
+
+
+Request validation:
+      GraphQL Request
+            │
+            ▼
+    ┌────────────────┐
+    │     PARSE      │
+    │                │
+    │ String → AST   │
+    └───────┬────────┘
+            │
+            ▼
+    ┌────────────────┐
+    │   VALIDATE     │
+    │                │
+    │ AST + Schema   │
+    └───────┬────────┘
+            │
+      ┌─────┴──────┐
+      │             │
+    INVALID        VALID
+      │             │
+      ▼             ▼
+Error response   EXECUTE
+                    │
+                    ▼
+                Resolvers
+                    │
+                    ▼
+                Field data
+                    │
+                    ▼
+              GraphQL response
+In a production Apollo setup, there are two sides: on the client, Apollo Client parses/holds your GraphQL document (often with build-time tooling that also does schema/type checking), then useQuery() handles cache lookup, variables, fetch policy, and prepares the network request; if the data isn't available in cache, it sends the query over HTTP/HTTPS to the server. On the server, Apollo Server/Router independently parses and validates the incoming GraphQL operation against the authoritative schema and, only if valid, executes it by calling resolvers, which fetch data from databases or other APIs; the result then comes back to Apollo Client, which normalizes it into its cache and notifies React so the component re-renders. Client-side validation is mainly for developer experience and early error detection, while server-side validation is mandatory because the server cannot trust the client. In production, persisted queries/APQ may also be used so the client sends a query hash instead of the complete query, but conceptually the flow remains Client → Apollo Client/cache → network → Apollo Server → parse → validate → execute → resolvers → DB/API → response → Apollo cache → React.
+
+
+
+=> Types of resolvers:
+
+1. Asynchronous resolver → needs to wait for something, usually a DB/API call. it returns a Promise. GraphQL waits for that Promise to resolve before continuing.
+
+2. Trivial resolver → doesn't need to fetch anything; it simply reads a property from the object it already has.
+you usually don't explicitly create a trivial resolver. 
+If the DB returns:
+{
+  id: 1,
+  name: "Rahul",
+  email: "rahul@gmail.com"
+}
+GraphQL automatically resolves:
+user
+ ├── id     → object.id       ← automatic/trivial
+ ├── name   → object.name     ← automatic/trivial
+ └── email  → object.email    ← automatic/trivial
+So when do you actually write a trivial resolver?
+1. Fetching related data:
+User: {
+  posts: (user) => db.posts.findMany({
+    where: { userId: user.id }
+  })
+}
+2. Calculating something:
+User: {
+  fullName: (user) => `${user.firstName} ${user.lastName}`
+}
+3. Calling another API:
+User: {
+  orders: (user) => orderService.getOrders(user.id)
+}
+4. Transforming data:
+User: {
+  profileImage: (user) => `https://cdn.com/${user.imageId}`
+}
+If the field already exists on the object returned by the parent resolver → don't write a trivial resolver. If you need to fetch, calculate, transform, or otherwise do work → write a trivial resolver.
+You don't specify trivial/default resolvers in the schema.
+
+Schema
+  ↓
+Defines WHAT fields exist
+
+Async Resolvers
+  ↓
+Defines HOW to get/compute fields
+
+Default resolver
+  ↓
+Automatically handles simple object properties
+
+
+Scalar coercion:
+Your database might store:
+4
+5
+6
+But you want your GraphQL API to show:
+NEWHOPE
+EMPIRE
+JEDI
+In Apollo Server, you tell GraphQL about this mapping:
+const resolvers = {
+  Episode: {
+    NEWHOPE: 4,
+    EMPIRE: 5,
+    JEDI: 6
+  }
+};
+And your schema says:
+enum Episode {
+  NEWHOPE
+  EMPIRE
+  JEDI
+}
+Then your resolver can return:
+{
+  appearsIn: [4, 5, 6]
+}
+GraphQL sees that appearsIn is an Episode enum and uses the mapping:
+4 → NEWHOPE
+5 → EMPIRE
+6 → JEDI
+So the client receives:
+{
+  "appearsIn": ["NEWHOPE", "EMPIRE", "JEDI"]
+}
+In one sentence: your resolver returns the internal value, and GraphQL converts it to the GraphQL value defined in the schema before sending the response.
+Normal GraphQL scalars/enums → automatic. Custom scalar behavior → you provide the code.
+
+
+=> Producing the result:
+GraphQL builds the response step by step from the smallest/leaf fields back up to the root. For example, if the query asks for user { name address { city } }, GraphQL first resolves name and city, then puts city inside address, then puts name and address inside user, and finally creates the complete response. So the final JSON response has almost the same structure as the query the client requested, with each field name acting as a key and its resolved value as the value.
+
+
+Trivial resolver = GraphQL's way of getting a field's value from an object when you don't provide a custom resolver.
+Scalar coercion = GraphQL's way of converting/validating that value into the scalar type defined by the schema.
+
+
+
+
+GRAPHQL QUERY LIFECYCLE
+=======================
+
+Client
+  │
+  │  GraphQL Query
+  │
+  ▼
+┌─────────────────────┐
+│ 1. Receive Request  │
+└──────────┬──────────┘
+           │
+           ▼
+┌─────────────────────┐
+│ 2. Parse Query      │
+│                     │
+│ Query → AST/Document│
+└──────────┬──────────┘
+           │
+           ▼
+┌────────────────────────────┐
+│ 3. Validate Against Schema │
+│                            │
+│ ✓ Field exists?            │
+│ ✓ Correct field type?      │
+│ ✓ Correct arguments?       │
+│ ✓ Valid fragments?         │
+│ ✓ Valid selection sets?    │
+└────────────┬───────────────┘
+             │
+       ┌─────┴─────┐
+       │           │
+    INVALID       VALID
+       │           │
+       ▼           ▼
+   Return       ┌──────────────────┐
+   errors       │ 4. Select        │
+   ❌           │    Operation     │
+                │                  │
+                │ query/mutation   │
+                └────────┬─────────┘
+                         │
+                         ▼
+                ┌──────────────────┐
+                │ 5. Execute       │
+                │    Root Resolver │
+                │                  │
+                │ Query.user(...)  │
+                └────────┬─────────┘
+                         │
+                         ▼
+                ┌──────────────────┐
+                │ 6. Resolve       │
+                │    Fields        │
+                │                  │
+                │ name             │
+                │ age              │
+                │ posts            │
+                └────────┬─────────┘
+                         │
+                         ▼
+                ┌──────────────────┐
+                │ 7. Nested Fields │
+                │                  │
+                │ posts             │
+                │   └─ title       │
+                │   └─ author      │
+                │       └─ name    │
+                └────────┬─────────┘
+                         │
+                         ▼
+                ┌──────────────────┐
+                │ 8. Resolve       │
+                │    Promises      │
+                │                  │
+                │ Async DB/API     │
+                │ calls complete   │
+                └────────┬─────────┘
+                         │
+                         ▼
+                ┌──────────────────┐
+                │ 9. Scalar        │
+                │    Coercion      │
+                │                  │
+                │ String / Int /   │
+                │ Boolean / Enum   │
+                └────────┬─────────┘
+                         │
+                         ▼
+                ┌──────────────────┐
+                │ 10. Produce      │
+                │     Result       │
+                │                  │
+                │ Build response   │
+                │ matching query   │
+                └────────┬─────────┘
+                         │
+                         ▼
+                      Client
+                         │
+                         ▼
+                      JSON
+
+Parse → Validate → Execute → Resolve → Produce Result
+
+
+
+Response:
+After a GraphQL document has been validated and executed, the server will return a response to the requesting client.
+One of GraphQL’s strengths is that the server response reflects the shape of the client’s original request, but a response may also contain helpful information if something unexpected happened before or during the execution of an operation.
+
+When a GraphQL request is executed the response is returned on a top-level data key. 
+When a request error occurs the data key will not be included because the server returns an error response to the client before the field resolvers are executed.
+At least one of data or errors will be present on the response (when it contains both it is a “partial response”)
+For example:
+{
+  "data": {
+    "human": {
+      "name": "Han Solo",
+      "appearsIn": [ "NEWHOPE", "EMPIRE" ],
+      "starships": [
+        {
+          "name": "Millenium Falcon"
+        }
+      ]
+    }
+  }
+}
+it’s described by the GraphQL specification. Under this key, you will find the result of the execution of the requested operation, which may include partial data for the requested fields if errors were raised during the execution of some field resolvers.
+
+GraphQL doesn't mandate JSON as the response serialization format. The specification defines the execution result structure, while JSON is the most commonly used format to serialize and send that result to the client.
+
+The GraphQL specification doesn’t require the use of a particular transport protocol for requests either, although it is common for HTTP to be used for stateless query and mutations operations. Long-lived, stateful subscription operations are often supported by WebSockets or server-sent events instead.
+
+
+Errors:
+1. Request errors :
+Request errors typically occur because the client made a mistake. For example, there may be a syntax error in the document, such as a missing bracket or the use of an unknown root operation type keyword
+Sometimes, a GraphQL request may be syntactically correct, but when the server parses and validates the document against the schema, it finds an issue with part of the operation and raises a validation error.
+2. Field errors :
+Field errors are raised if something unexpected happens during execution. For example, a resolver may raise an error directly, or may return invalid data such as a null value for a field that has a Non-Null output type.
+3. Network errors :
+As with network calls to any type of API, network errors that are not specific to GraphQL may happen at any point during a request. These kinds of errors will block communication between the client and server before the request is complete, such as an SSL error or a connection timeout. Depending on the GraphQL server and client libraries that you choose, there may be features built into them that support special network error handling such as retries for failed operations.
+
+extensions is an optional place in a GraphQL response where the server can provide extra information that isn't part of the actual requested data. The important point is that GraphQL doesn't define what goes inside extensions. The server/framework decides that.
+extensions is an optional top-level field in a GraphQL response that allows a specific GraphQL implementation to return additional metadata such as tracing, telemetry, or rate-limit information. GraphQL doesn't prescribe what this field must contain
+
+data → the actual data the client requested.
+errors → errors encountered while processing the request.
+extensions → optional extra metadata/information provided by the GraphQL implementation.
+
+
+Subscriptions:
+Subscription operations are well suited for data that changes often and incrementally, and for clients that need to receive those incremental updates as close to real-time as possible to deliver the expected user experience.
+
+GraphQL subscriptions are typically backed by a separate pub/sub system so that messages about updated data can be published as needed during runtime and then consumed by the resolver functions for the subscription fields in the API.
+
+Using subscriptions at scale:
+It can be challenging when scaling GraphQL servers horizontally because each subscribed client must be bound to a specific instance of the server.
+Similarly, client libraries will typically need more advanced features to handle these kinds of operations, such as logic to resubscribe to operations if the connection is disrupted or mechanisms to handle potential race conditions between initial queries and updated subscription data.
+

@@ -1,0 +1,256 @@
+Load Balancer:
+A Load Balancer is a service that distributes incoming client requests across multiple backend servers or instances.
+
+The main goal is to improve:
+High Availability: If one EC2 crashes, Load Balancer stops sending requests to it. Users continue accessing healthy instances.
+Scalability: Traffic increases. Auto Scaling launches new EC2 instances. The Load Balancer automatically routes traffic to the new instances. No manual configuration is needed.
+Fault Tolerance: One Availability Zone fails. Traffic shifts to another Availability Zone.
+           ALB
+            |
+-------------------------
+|                       |
+AZ-1                  AZ-2
+
+EC2-1                 EC2-3
+EC2-2                 EC2-4
+Performance
+SSL Termination: Instead of installing SSL certificates on every EC2. Install the certificate on the Load Balancer.
+Zero Downtime deployments
+
+When Auto Scaling launches new EC2 instances,
+The Load Balancer:
+1.detects the new instances
+2.performs health checks
+3.starts sending traffic only after the instances are healthy.
+This ensures users never experience downtime.
+
+
+Load Balancer Algorithms:
+1. Round Robin: Requests are distributed one by one.
+Example:
+Request 1 → EC2-1
+Request 2 → EC2-2
+Request 3 → EC2-3
+Request 4 → EC2-1
+Request 5 → EC2-2
+
+2. Least Connections: Traffic goes to the server with the fewest active connections.
+Example:
+EC2-1 → 120 users
+EC2-2 → 15 users
+EC2-3 → 35 users
+Next request goes to EC2-2
+
+3. Weighted Round Robin: Some servers are more powerful. The more powerful server receives more requests.
+EC2-1
+16 GB RAM
+Weight = 4
+EC2-2
+8 GB RAM
+Weight = 2
+EC2-3
+4 GB RAM
+Weight = 1
+Traffic distribution:
+EC2-1
+EC2-1
+EC2-1
+EC2-1
+EC2-2
+EC2-2
+EC2-3
+
+4. IP Hash:
+Based on the client's IP address.
+The same user is consistently routed to the same server.
+Useful when session persistence is required.
+
+
+Types of Load Balancer:
+
+1. Application Load Balancer (ALB):
+Layer 7 (Application Layer)
+Works with:
+HTTP
+HTTPS
+WebSocket
+HTTP/2
+ALB understands URLs and HTTP headers.
+ALB can route requests based on the URL path.
+Host-based routing: like subdomain. This is called content-based routing.
+
+2. Network Load Balancer (NLB):
+Layer 4 (Network Layer)
+Works with:
+TCP
+UDP
+TLS
+It doesn't inspect HTTP content; it forwards packets based on IP addresses and ports.
+Designed for:
+Very high performance
+Millions of requests per second
+Very low latency
+Static IP addresses
+Preserving client source IP
+Real example:
+Gaming servers
+Banking applications
+Trading platforms
+VoIP
+
+3. Gateway Load Balancer (GWLB)
+
+4. Classic Load Balancer (CLB)
+
+
+Your application is monolithic. Why would you still use an ALB?
+Even for a monolithic application, I would typically use an Application Load Balancer because it provides high availability, health checks, SSL termination, and seamless integration with Auto Scaling Groups. Although I'm not using path-based routing initially, the ALB still distributes HTTP/HTTPS traffic across multiple instances. If the application later evolves into microservices, I can leverage path-based or host-based routing without changing the load balancer.
+
+Can you use an NLB instead?
+Yes, technically an NLB can also distribute traffic for a monolithic application. However, unless I specifically need Layer 4 features such as ultra-low latency, TCP/UDP support, or static IP addresses, I would choose an ALB for a typical web application because it offers richer HTTP-aware capabilities and is generally the recommended choice for web applications on AWS.
+
+
+AWS Elastic Load Balancer (ELB):
+AWS provides a managed service called Elastic Load Balancing (ELB).
+It automatically:
+distributes traffic
+performs health checks
+scales automatically
+integrates with Auto Scaling
+supports SSL
+spans multiple Availability Zones
+
+
+Which algorithm does AWS ALB use?
+Unlike traditional hardware load balancers, AWS does not allow us to configure algorithms such as Round Robin or Least Connections. ALB and NLB use AWS-managed flow-hashing and connection distribution mechanisms to efficiently route traffic while maintaining session consistency.
+
+You do not need to know AWS's internal implementation because AWS doesn't publicly document every detail.
+
+Flow hashing:
+For a new connection, AWS creates a hash using attributes such as source IP, destination IP, source port, destination port, and protocol. The hash determines which backend target receives that connection. All packets belonging to the same connection continue going to the same target
+The entire TCP connection stays on the same backend.
+
+Is flow hashing the same as IP Hash?
+No. IP Hash typically uses only the client IP address to select a backend, so all requests from that IP go to the same server. AWS ELB uses flow hashing, which considers multiple connection attributes such as source IP, destination IP, source port, destination port, and protocol. This keeps each network connection consistent while distributing different connections more evenly across healthy targets.
+
+
+Are the algorithms the same for ALB and NLB? No
+
+API Gateway before Load Balancer or after? 
+Usually: API Gateway → Load Balancer
+Because API Gateway provides features that a Load Balancer doesn't.
+1. Authentication: JWT validation, OAuth, Cognito, IAM Authentication
+2. Rate Limiting : Without API Gateway, all traffic would hit the ALB and backend first.
+3. API Keys : API Gateway can require API keys and usage plans for different consumers.
+4. Request Transformation : Modify headers, Transform request bodies, Map query parameters
+5. Caching : Frequently requested responses can be served directly from API Gateway, reducing load on the backend.
+6. API Versioning : API Gateway can route different versions to different backends.
+
+
+API Gateway is not mandatory. If you're hosting a normal web application (for example, a React frontend with a Spring Boot backend), a common architecture is simply:
+Internet
+    |
+Route 53
+    |
+ALB
+    |
+EC2 / ECS / EKS
+You introduce API Gateway when you specifically need API management capabilities (authentication, throttling, API keys, usage plans, request transformation, etc.), not just because you're exposing an HTTP service. This distinction often comes up in interviews.
+
+
+
+If I don't have API Gateway, can I implement authentication, rate limiting, etc. in my application?
+Absolutely.
+In fact, most applications do exactly this.
+For example, suppose you have:
+Internet
+      |
+     ALB
+      |
+Spring Boot
+Inside Spring Boot you can implement:
+JWT Authentication, OAuth2, Role-Based Access Control (RBAC), Rate Limiting, Request validation, CORS, Logging, Input validation
+This is completely normal.
+
+Is this okay for small applications? 
+Yes. This is actually what many startups do.
+
+Then why use API Gateway?
+As applications grow, you may have:
+User Service
+Order Service
+Payment Service
+Inventory Service
+
+If every service implements: JWT validation, Rate limiting, API keys, Logging
+you're duplicating the same logic.
+
+Client
+    |
+API Gateway
+    |
+---------------------
+|         |         |
+User    Order   Payment
+
+
+| Application Architecture                      | Recommended Architecture                                                                |
+| --------------------------------------------------------------------------------------- |
+| Small monolith                                | **ALB → Application** ✅                                                                 |
+| Large monolith with external API consumers    | **API Gateway → ALB → Application** ✅                                                   |
+| Microservices exposed to clients              | **API Gateway → ALB → Services** ✅                                                      |
+| Internal microservice-to-microservice traffic | Usually **ALB, service discovery, or service mesh**; API Gateway is often not involved. |
+
+
+The principle to remember:
+
+Don't think:
+Monolith → No API Gateway
+Microservices → API Gateway
+
+Instead think:
+Need API management (authentication, throttling, API keys, quotas, transformations, analytics)? → Use API Gateway.
+
+Just need to distribute HTTP/HTTPS traffic to your application? → An ALB is usually enough.
+
+So why not always use API Gateway?
+Because every service adds:
+More configuration
+Additional cost
+Another component to operate
+Slight additional latency
+If your application is simple, those benefits may not justify the extra complexity.
+
+
+Example AWS Architecture Without API Gateway:
+                Internet
+                   |
+               Route 53
+                   |
+          Application Load Balancer
+                   |
+       -----------------------------
+       |             |             |
+    ECS Task     ECS Task      ECS Task
+    User         Order         Payment
+    Service      Service       Service
+
+                   |
+              RDS / DynamoDB
+ALB does:
+SSL termination
+Health checks
+Routing
+Services do:
+Authentication
+Business logic
+Data processing
+
+
+Similarities between API Gateway and Load balancer:
+Both API Gateway and Load Balancer receive client requests and forward them to backend services.
+The difference is what decisions they make and what problems they solve.
+
+Both API Gateway and Load Balancer act as a single entry point between clients and backend services. They can route requests, hide backend infrastructure, support HTTPS termination, and improve application availability. However, a Load Balancer mainly focuses on distributing traffic across healthy targets, while API Gateway focuses on managing APIs by providing features like authentication, throttling, API keys, and request transformation.
+
+Yes, both support path-based routing. For example, /users/* can be routed to a user service and /orders/* can be routed to an order service. The difference is that ALB performs routing mainly for distributing traffic among backend targets, while API Gateway provides API management features along with routing, such as authentication, throttling, API keys, and request transformation.

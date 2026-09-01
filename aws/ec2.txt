@@ -1,0 +1,209 @@
+EC2 (Elastic Compute Cloud):
+
+Instance categories: Purpose | Examples Instance Types | Best For
+1.General Purpose : Balanced CPU, memory, and networking | t3, t4g, m5, m6i, m7i | Web servers, application servers, small databases
+2.Compute Optimized : High-performance processors | c5, c6i, c7g, c7i | Batch processing, gaming, high-performance web servers
+3.Memory Optimized : Large memory capacity | r5, r6i, r7i, x2idn, u-* | In-memory databases, caching, big data analytics
+4.Storage Optimized : High-speed local storage | i3, i4i, im4gn, d3, h1 | NoSQL databases, data warehousing, distributed file systems. ex: Cassandra, Elasticsearch, Log processing systems
+5.Accelerated Computing : GPU/FPGA/AI accelerators | g5, g6, p5, p6, trn1, inf2, f1 | Machine learning, graphics rendering, AI inference/training
+5.High Performance Computing (HPC) : Scientific and engineering workloads | hpc6a, hpc7g | Simulations, weather modeling, computational chemistry
+
+Instance Size:
+nano, micro, small, medium, large, xlarge, 2xlarge, 4xlarge, 8xlarge, 12xlarge, 16xlarge, 24xlarge, 32xlarge, 48xlarge
+You choose:
+1. Phone model → iPhone 16, Samsung S25, Pixel 10
+2. Storage option → 128 GB, 256 GB, 512 GB
+EC2 works in a similar way.
+1. Instance type (family) = What kind of machine it is.
+2. Instance size = How much of that machine's resources you get.
+
+Type answers: What kind of machine do I need?
+Size answers: How much of that machine do I need?
+
+t3.large → 8 GB RAM
+m7i.large → 8 GB RAM (with different CPU characteristics)
+r7i.large → 16 GB RAM
+The word large only tells you the size within that family. It does not mean every large instance across all families has the same specifications.
+
+Instancy type as per the requirement:
+Redis: Memory Optimized (R series). Because it stores data in RAM.
+MySQL/PostgreSQL: General Purpose (M series) or Memory Optimized (R series). Needs balanced CPU and RAM
+MongoDB: Memory Optimized (R series) or Storage Optimized (I series). Uses RAM heavily and benefits from fast disks
+Where is the data usually read from during normal operation in database?
+For MySQL, PostgreSQL, and MongoDB, the answer is ideally RAM. Disk is mainly the permanent storage, while RAM is where the database tries to serve most queries from. That's why choosing enough memory is usually more important than choosing the fastest possible storage.
+
+
+=> Security Group:
+A Security Group in EC2 is like a firewall for your virtual machine.
+Its job is to control who can connect to your EC2 instance and what traffic is allowed in or out.
+Think of it as the security guard at the entrance of a building.
+Internet
+     │
+     ▼
+Security Group
+     │
+     ▼
+EC2 Instance
+
+It controls two kinds of traffic:
+1. Inbound Rules (Incoming traffic) : Who is allowed to connect to my EC2 instance?
+Example: SSH, HTTP, HTTPS
+2. Outbound Rules (Outgoing traffic) : Where can my EC2 instance connect?
+Your application needs to: Download software updates, Connect to a database, Call an external API
+Security Groups control whether those outgoing connections are allowed. By default, AWS allows all outbound traffic.
+
+EC2 instance can have multiple Security Groups attached at the same time. This is actually a common practice because it lets you organize rules by purpose.
+EC2 Instance
+├── Security Group 1 (Web)
+├── Security Group 2 (SSH)
+└── Security Group 3 (Database Access)
+How does AWS evaluate multiple Security Groups? AWS takes the UNION (combined set) of all allow rules.
+
+Different Ports:
+Security Group A: 80 allowed
+Security Group B : 22 allowed
+Final result: 80 allowed, 22 allowed
+
+Same Port:
+Security Group A: 22 allowed (Source: my ip)
+Security Group B : 22 allowed (Source: office ip)
+Final result: 22 allowed (Source: my ip, office ip)
+
+If there's no allow rule, the traffic is blocked by default.
+Do Security Groups have "deny" rules? No
+Can one Security Group be attached to multiple EC2 instances? Yes
+
+
+AMI (Amazon Machine Image):
+An AMI (Amazon Machine Image) is a pre-configured template used to launch an Amazon EC2 instance. Think of it as a snapshot of a server's configuration
+
+An AMI is specific to the following:
+Region
+Operating system
+Processor architecture
+Root volume type
+Virtualization type
+
+You can create an AMI from your Amazon EC2 instances and then use it to launch instances with the same configuration. You can copy an AMI to another AWS Region, and then use it to launch instances in that Region. You can also share an AMI that you created with other accounts so that they can launch instances with the same configuration. You can sell your AMI using the AWS Marketplace.
+
+When traffic increases, the Auto Scaling Group launches new EC2 instances using the configured AMI so each instance is identical.
+                Auto Scaling Group
+                      │
+               Needs 3 more servers
+                      │
+                      ▼
+               Uses Existing AMI
+                      │
+          -------------------------
+          │           │           │
+          ▼           ▼           ▼
+        EC2        EC2         EC2
+
+Does modifying one EC2 instance change the AMI?
+No. Once an instance is launched, changes to it do not affect the original AMI. You must create a new AMI to capture those changes.
+
+Why do companies use AMIs?
+In production, we use AMIs to standardise server configuration. Every EC2 instance launched by the Auto Scaling Group has the same operating system, software, monitoring agents, and baseline configuration. This reduces manual setup, improves consistency, and speeds up scaling
+
+
+How EC2 Launch Works:
+Step 1: Choose AMI
+↓
+Step 2: Choose Instance Type
+↓
+Step 3: Choose Security Group
+↓
+Step 4: Launch EC2
+
+
+
+EBS (Elastic Block Store):
+Amazon EBS (Elastic Block Store) is a persistent block storage service for Amazon EC2 instance.
+It acts like a virtual hard disk (SSD/HDD) that you attach to an EC2 instance.
+Unlike the instance's memory, the data stored on an EBS volume persists even if the EC2 instance is stopped.
+Laptop (EC2) = Computer
+Hard Disk (EBS) = Stores files permanently
+If you shut down the laptop, your files remain on the hard disk.
+Similarly, if you stop an EC2 instance, the EBS volume still contains your data.
+
+     EC2 Instance
++----------------------+
+| Ubuntu               |
+| Java                 |
+| Spring Boot          |
++----------+-----------+
+          |
+Attached EBS Volume
++----------------------+
+| OS Files             |
+| Application Logs     |
+| Database Files       |
+| User Data            |
++----------------------+
+
+If the instance is stopped and restarted, you don't want to lose User-uploaded files, Application logs, Database files, Configuration. EBS provides persistent storage for these workloads.
+
+We can attach mulitple EBS to single EC2 instance.
+
+Persistent storage: Stopping an EC2 instance does not delete the EBS volume by default. (But for that need to configure the option)
+Can be detached and attached : You can detach an EBS volume from one EC2 instance and attach it to another (within the same Availability Zone).
+Multiple volumes: One EC2 instance can have multiple EBS volumes.
+EC2
+├── Root Volume (OS)
+├── Data Volume
+├── Log Volume
+└── Backup Volume
+
+Root volume vs additional volume:
+Root Volume:
+Contains: Operating System & Boot files
+Example:
+Ubuntu
+/
+├── bin
+├── etc
+├── home
+└── var
+
+Additional Volume
+Stores:
+Logs
+Images
+Backups
+Databases
+
+Can multiple EC2 instances share one EBS volume? No
+
+An EBS Volume is the actual virtual hard disk that you create and attach to an EC2 instance.
+Think of it like this:
+EBS (Elastic Block Store) = The AWS storage service.
+EBS Volume = A specific disk created within that service.
+Real-world analogy:
+Imagine AWS is a storage company.
+EBS = The storage service the company provides.
+EBS Volume = One hard drive you rent from that company.
+
+
+Elastic IP (EIP):
+Elastic IP (EIP) is a static public IPv4 address provided by AWS that can be associated with an EC2 instance, NAT Gateway, or network interface (ENI). Unlike the default public IP assigned to an EC2 instance, an Elastic IP remains allocated to your AWS account until you release it. This allows you to remap the same public IP to another instance if the original instance fails, ensuring minimal downtime.
+
+Why Do We Need an Elastic IP?
+Normally, when an EC2 instance is crashed or restarted:
+The private IP remains the same.
+The default public IP changes (unless an Elastic IP is attached).
+If clients, DNS records, firewalls, or external applications depend on a fixed public IP, changing the IP causes connectivity issues. An Elastic IP solves this by providing a permanent public IP that you control.
+
+Is Elastic IP free?
+Interview Answer:
+An Elastic IP attached to a running resource is generally not charged separately.
+AWS charges for unused Elastic IPs and may charge for additional Elastic IP usage beyond AWS's free allowance. Pricing can change, so always verify the current AWS pricing before designing your solution.
+
+We don't assign Elastic IPs directly to application servers in production because it creates a single point of failure. Instead, we place an Application Load Balancer in front of multiple EC2 instances. The ALB provides high availability, distributes traffic, and performs health checks.
+
+In one of our production environments, we used an Application Load Balancer to expose the application to users, while the EC2 instances ran in private subnets without public IPs. We assigned an Elastic IP to the NAT Gateway so instances in the private subnets could securely download operating system updates and application dependencies. For administrative access, our bastion host had an Elastic IP, allowing engineers to connect from approved corporate IP addresses.
+
+
+
+
+
+

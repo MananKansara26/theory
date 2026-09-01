@@ -1,0 +1,351 @@
+Data Structures:
+
+String:
+The simplest Redis data type.
+Redis strings can store serialized JSON, numbers, tokens, or simple values. Since Redis keeps data in memory, retrieving a cached value is very fast. We can also attach a TTL to automatically expire the cache.
+
+Hash:
+A String stores a single value against a key, whereas a Hash stores multiple field-value pairs. If I need to frequently update individual properties of an object, Hash can be more efficient because I don't need to read and rewrite the entire serialized object.
+example:
+HSET user:1 name "Manan" age 24 role "Developer"
+Retrieve: HGET user:1 name or HGETALL user:1
+
+List:
+Redis List is an ordered collection of strings.
+example:
+LPUSH tasks "task1"
+LPUSH tasks "task2"
+LPUSH tasks "task3"
+task3 → task2 → task1
+You can use:
+LPUSH
+RPUSH
+LPOP
+RPOP
+LRANGE
+Common use case: Queue
+How can Redis List be used as a queue?
+A producer can push jobs into a Redis List using LPUSH or RPUSH, while workers can consume jobs using LPOP, RPOP, or blocking commands such as BRPOP. However, for more advanced event-processing requirements, Redis Streams are generally a better choice.
+
+Set:
+A Set contains unique values.
+SADD skills "nodejs"
+SADD skills "redis"
+SADD skills "nodejs"
+nodejs, redis
+Useful commands:
+SADD
+SREM
+SMEMBERS
+SISMEMBER
+SCARD
+Set vs List?
+A List maintains order and allows duplicate values, whereas a Set contains unique values and doesn't provide normal list-style ordering.
+
+Sorted Set / ZSet:
+A Sorted Set stores: member + score
+Example:
+ZADD leaderboard 100 user1
+ZADD leaderboard 250 user2
+ZADD leaderboard 180 user3
+Redis automatically maintains ordering based on score.
+user1 → 100
+user3 → 180
+user2 → 250
+
+Steams:
+Redis Stream is a data structure in Redis that is mainly used for event-driven communication and message processing between different services.
+You can think of it as an append-only log of messages, where every message gets a unique ID. Producers add messages to the stream, and consumers read and process them.
+For example, in an e-commerce application, when an order is created, the Order Service can publish an event like OrderCreated to a Redis Stream. Different consumers can then process that event for things like payment, notification, or inventory.
+One important feature is Consumer Groups. A consumer group allows multiple consumers to share the workload. Each message is generally processed by only one consumer within that group, which makes it useful for scalable background processing.
+Redis Streams also keep track of pending/unacknowledged messages. After successfully processing a message, the consumer acknowledges it. If a consumer crashes before acknowledgment, the message can be identified and reprocessed by another consumer.
+So, compared with Redis Pub/Sub, the major advantage of Streams is that messages are persisted, consumers can process them at their own pace, and we have message tracking and acknowledgment.
+I would typically use Redis Streams when I need asynchronous processing, reliable event delivery, and multiple workers consuming events.
+
+Is Redis Stream a queue?
+Yes, you can use a Redis Stream as a queue, but technically it's more than a traditional queue.
+A traditional queue is roughly: Producer → Queue → Worker
+Redis Stream is more like an append-only event log:
+Producer
+   ↓
+Redis Stream
+   ↓
+Consumer Groups
+   ↓
+Consumers
+The big advantage is that the messages remain in the stream, and different consumer groups can independently consume them.
+
+Imagine you have an orders stream:
+orders stream
+────────────────────────────
+order_created  #101
+order_created  #102
+order_created  #103
+order_created  #104
+
+You could have:
+            orders stream
+                  │
+    ┌────────────┼────────────┐
+    ↓            ↓            ↓
+Payment Group  Inventory Group Analytics Group
+Each group has a different responsibility. Here group means consumer group.
+For any consumer group we can add as many worker as we need to scale it horizontally.
+Different groups can have different numbers of workers
+            orders
+              │
+  ┌───────────┼────────────┐
+  ↓           ↓            ↓
+Payment     Inventory    Analytics
+Group        Group         Group
+  │           │            │
+10 workers    5 workers    2 workers
+Stream = source of events
+Consumer Group = a processing pipeline
+Consumer = one worker in that pipeline
+
+Group are indenpendent to each other and can process request independently at the same time.Think of consumer groups as independent subscribers to the same stream.
+
+❌ order #123
+      ↓
+Payment Group
+      ↓
+Inventory Group
+      ↓
+Analytics Group
+Instead, it's more like:
+        order #123
+              │
+  ┌──────────┼──────────┐
+  ↓          ↓          ↓
+Payment    Inventory   Analytics
+  ↓          ↓          ↓
+Process    Process     Process
+
+Instead, your services should create new events.
+  order_events
+        │
+        ↓
+  Payment Group
+        │
+payment succeeds
+        │
+        ↓
+XADD payment_events
+        │
+        ↓
+Inventory Group
+        │
+inventory reserved
+        │
+        ↓
+XADD inventory_events
+        │
+        ↓
+Notification Group
+That's an event-driven workflow.
+
+STREAM = "Here are all my events"
+GROUP = "I am interested in these events for THIS purpose"
+CONSUMER = "I am one worker doing that group's work"
+ACK = "I finished this job"
+PEL = "This job was given to a worker but isn't finished yet"
+
+Same Group → workers share jobs
+Different Groups → independent processing
+
+Consumer Groups don't create the workflow. Events create the workflow.
+
+
+Lifecycle:
+1. Steam : A Redis Stream is where events/jobs are stored.
+2. Consumer group : "A team that wants to process events from this stream for a particular purpose."
+3. Does every group get the event? Yes, conceptually.
+Order #101
+   │
+   ├── Payment Group → charge customer
+   │
+   ├── Inventory Group → reserve stock
+   │
+   └── Analytics Group → record analytics
+You don't send the event separately to each group. You add it once to the Stream. The groups independently read it.
+4. Consumers inside the SAME group share the work.
+5. So the same event can be processed by all three groups, independently.
+And if you need A → B → C sequentially, then A should produce a new event that B consumes, and B produces another event that C consumes.
+
+
+for this sequentical architecture: here we made different streams as all are dependents
+            ┌──────────────┐
+            │     User     │
+            └──────┬───────┘
+                  │
+                  │ POST /order
+                  ↓
+          ┌──────────────────┐
+          │   Order Service   │
+          └────────┬─────────┘
+                  │
+      ┌───────────┴───────────┐
+      │                       │
+      ↓                       ↓
+┌───────────┐           XADD order_events
+│  Database │                   │
+│ Order=123 │                   ↓
+└───────────┘          ┌─────────────────┐
+                        │ Redis Stream     │
+                        │ order_events     │
+                        └────────┬────────┘
+                                │
+                                ↓
+                        ┌─────────────────┐
+                        │ payment_group   │
+                        └────────┬────────┘
+                                │
+                        ┌───────┴───────┐
+                        ↓       ↓       ↓
+                        P1      P2      P3
+                        │
+                        ↓
+                ┌─────────────────┐
+                │ Payment Service │
+                └────────┬────────┘
+                          │
+                Payment SUCCESS
+                          │
+                        XADD
+                          ↓
+                ┌─────────────────┐
+                │ payment_events  │
+                │ Redis Stream     │
+                └────────┬────────┘
+                          │
+                          ↓
+                ┌─────────────────┐
+                │inventory_group  │
+                └────────┬────────┘
+                          │
+                    ┌────┴────┐
+                    ↓         ↓
+                    I1        I2
+                    │
+                    ↓
+              Inventory Service
+                    │
+            Inventory SUCCESS
+                    │
+                    XADD
+                    ↓
+            ┌──────────────────┐
+            │ inventory_events │
+            │ Redis Stream     │
+            └────────┬─────────┘
+                    │
+                    ↓
+            ┌──────────────────┐
+            │ analytics_group  │
+            └────────┬─────────┘
+                    │
+                    A1
+                    │
+                    ↓
+            Analytics Service
+
+
+=> Implementation of socket for multipe instances:
+
+Problem: Different user socket connections are in different server instance. If two users want from different socket connection wants to communicate with each other then how would they do?
+
+=> Broadcast Approach:
+
+There are two users :
+user1 socket is no server A
+user2 socket is no server B
+
+There is one channel "websocket:connection" which will be subscribed by all the server instance.
+
+user1 receives the data from the client and wanted to send the message to user2.  but user2 socket is not present in the server A. so it will broadcast the message to channel which will be subscribed by all the server. server B will found the user2. in the braodcase channel user1 has send the payload that it wants the send to user2. now server B will pick the payload from the pub/sub channel and use the socket instance of user2 and send it to user2. io.socket(user2).send(payload).
+
+Redis itself is not storing the WebSocket
+
+User 1
+  |
+  | WebSocket
+  v
+Server A
+  |
+  | local connections
+  | user1 → socketA
+  |
+  X user2 doesn't exist here
+  |
+  | PUBLISH
+  v
+Redis Pub/Sub
+  |
+  | all servers subscribed
+  |
+  +----------+----------+
+  |          |          |
+  v          v          v
+Server A   Server B   Server C
+              |
+              | user2 exists
+              |
+              v
+         socketB
+              |
+              | send(payload)
+              v
+           User 2
+
+Problem: 
+what if the architecture is like:
+100 WebSocket servers
+1 million messages/sec
+If every message goes to every server, you're doing: 
+1M messages × 100 servers
+= 100M message deliveries
+
+solution: targeted channels
+Server B will subscribe to channel "user:user2". 
+Now if user1 from Server A wants to send the notification to user2 from Server B, it will publish to channel "user:user2" which will be subscribed by other instance.
+
+However, subscribing to one Redis channel per user can itself become problematic at very large scale, so production designs often use server/node channels instead.
+
+P.S.: Its for very big systems
+
+
+Best approach: Servver-Speciic Channel Approach
+In the first approach, we dont know recipient user's server instance, as a result we need to broadcast an event to all server instances.
+
+We have channel for each server instance:
+Server A
+Server B
+Server C
+Each server creates its own Redis channel:
+server:A
+server:B
+server:C
+Here each server typically subscribes to its own channel, not to every other server's channel.
+But in broadcast approach, there is one channel "websocket:connection" which will be subscribed by all the server instance.
+
+But now we will use the shared redis where we will store the user and server instance mapping. Example: user1 => Server A, user2 => Server B etc.
+Using this we can find the instance of targeted user from the shared redis. For example on Server A we can find that user2 is connected with Server B. 
+
+Now user1 from Server A will publish to channel : server:B
+PUBLISH server:B {
+    to: "user2",
+    message: "Hello"
+} => Redis, please deliver this message to Server B.
+
+Server A
+   |
+   | "Redis, give this message to Server B"
+   v
+Redis
+   |
+   | server:B channel
+   v
+Server B
+
+So in the first approach broadcasting is used to find the server instance of user2. But in the current approach we only send the message to the channel of the server instance of the user
