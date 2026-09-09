@@ -23,6 +23,162 @@ How to avoid sounding "Scripted"
 - remove filler words
 
 
+=> Why should we hire you?
+I like solving complex problems.
+I take ownership of my work.
+I focus on business impact, not just coding.
+I write clean and scalable code.
+I can work independently when needed.
+I help team members with technical problems.
+I communicate issues early.
+I adapt quickly to new technologies and domains.
+I focus on delivering quality within deadlines.
+
+Problem solving → Ownership → Business impact → Quality → Teamwork → Adaptability
+
+
+=> Walk me through your career so far
+Started my career as a Node.js developer.
+First project was built from scratch.
+Learned Node.js, APIs, databases, and backend development.
+Worked closely with my PM and learned client communication.
+Learned to understand business requirements, not just technical requirements.
+Moved to a different project with a new domain and tech stack.
+Learned the required technologies and delivered the project successfully.
+Later, client needed frontend support.
+Learned React and started contributing to frontend.
+Then moved to a microservices-based project.
+Learned microservices and worked with a different architecture.
+Later worked on the company's product.
+Learned to think more from the end-user perspective.
+Over time, moved from just writing code → owning solutions.
+Today, I focus on technical quality, scalability, business requirements, and user experience.
+
+"So my journey has been mainly about expanding beyond backend development — from coding, to understanding the business, owning solutions, and contributing across the stack when needed."
+
+
+=> Why do you want to join Accenture?
+Accenture works on large-scale and complex projects.
+Opportunity to work with different clients and domains.
+Exposure to enterprise-level architecture and engineering practices.
+I can contribute with my Node.js/backend experience.
+I can also contribute across the stack when required.
+I want to work in an environment where I can take more ownership.
+Opportunity to learn from experienced engineers and teams.
+I believe my experience with APIs, microservices, AWS, databases, and scalable systems fits well.
+I want to grow while contributing to real business problems.
+
+
+=> Why are you looking for a change?
+My previous company has been a good learning experience.
+I got opportunities to work on different projects and technologies.
+I learned a lot about backend, frontend, cloud, clients, and business requirements.
+At this stage, I want more challenging opportunities.
+There were fewer new projects/opportunities in my previous company.
+I want to take more ownership and responsibility.
+I want to work on larger and more complex products.
+I want more opportunities to demonstrate leadership and problem-solving skills.
+Looking for an environment where I can grow long-term.
+
+"There was no work." => "The availability of new projects and opportunities had become limited."
+
+
+=> What are your career goals for the next 3–5 years?
+Strong engineer → ownership → technical leadership → mentoring
+
+Become a stronger end-to-end engineer.
+Take ownership of larger features/modules.
+Work on complex and scalable systems.
+Improve my system design and architecture skills.
+Become better at making technical trade-offs.
+Understand business requirements more deeply.
+Mentor and support junior developers.
+Share knowledge and best practices with the team.
+Take more responsibility for delivery and quality.
+Become someone the team can rely on for technical decisions.
+Grow into a technical leadership role naturally.
+Strong closing:
+
+"I don't have a fixed title in mind. My goal is to become a strong engineer who can own a problem end-to-end, make good technical decisions, and help the team deliver successfully."
+
+
+=> What are your strengths?
+Business + technical understanding
+End-user thinking
+Clean & scalable code
+Problem identification
+Adaptability
+
+
+=> What is your biggest weakness?
+Sometimes I focus too much on making things perfect.
+Earlier, I spent extra time on improvements that were not critical.
+I realized this can affect delivery timelines.
+Now I prioritize business-critical requirements first.
+I separate must-have vs nice-to-have improvements.
+I deliver the important functionality first.
+Then I improve/refactor when time allows.
+"I'm still quality-focused, but now I balance quality with delivery and priorities."
+
+
+=> Tell me about a difficult production issue you faced.
+
+Situation:
+At AMRIS, we had an issue with materialized view refresh.
+Initially, we refreshed the MV using a database trigger.
+It worked normally with individual updates.
+
+Problem:
+Edge case: multiple inserts happened simultaneously.
+Every insert triggered an MV refresh.
+Multiple refresh operations ran at the same time.
+This caused database contention/performance issues.
+
+Investigation:
+Identified that the trigger-based approach was not suitable for high-frequency updates.
+Also found that some MVs had dependencies on other MVs.
+Refreshing them in the wrong order caused incorrect/stale data.
+
+Solution:
+Designed a refresh queue/retry mechanism.
+Insert operations created refresh requests instead of directly refreshing the MV.
+Processed refresh requests in a controlled manner.
+Added a retry/interval mechanism to avoid concurrent refreshes.
+Removed outdated/duplicate refresh requests after processing the latest one.
+Managed the MV dependency order so dependent MVs were refreshed after their source MVs.
+
+Result:
+Avoided multiple simultaneous MV refreshes.
+Reduced database contention.
+Made the refresh process more reliable.
+Handled high-frequency updates more safely.
+
+Learning
+Production systems need to handle concurrency and edge cases, not just the normal flow.
+Database triggers are convenient, but they aren't always suitable for heavy operations.
+I learned to consider dependencies, ordering, retries, and failure handling when designing background processes.
+
+
+=> how will you handle the feedback from the manager?
+I listen to the feedback without becoming defensive.
+First, I try to understand why the feedback was given.
+I ask questions if anything is unclear.
+I separate personal opinion from actionable feedback.
+If I agree, I work on it and improve.
+If I have a different perspective, I discuss it respectfully.
+I don't take constructive feedback personally.
+I try to convert feedback into specific actions.
+I follow up later to check whether I've improved.
+
+Example:
+My senior told me my technical knowledge was good.
+But I needed to improve my understanding of end-user requirements.
+Initially, I was more focused on the technical implementation.
+I took the feedback positively.
+Started asking more questions about how the user would actually use the feature.
+Focused more on business requirements before designing the solution.
+This helped me move from "how do I build it?" → "what should I actually build?"
+
 
 => How do you handle conflict with a client or project manager?
 Best structure to remember: Understand → Explain impact → Offer solution → Align → Document

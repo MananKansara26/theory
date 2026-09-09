@@ -564,6 +564,27 @@ GraphQL builds the response step by step from the smallest/leaf fields back up t
 Trivial resolver = GraphQL's way of getting a field's value from an object when you don't provide a custom resolver.
 Scalar coercion = GraphQL's way of converting/validating that value into the scalar type defined by the schema.
 
+Type resolver = "Which concrete GraphQL type is this object?"
+const resolvers = {
+  Animal: {
+    __resolveType(obj) {
+      if ("bark" in obj) return "Dog";
+      if ("hands" in obj) return "Monkey";
+
+      return null;
+    },
+  },
+};
+
+Field resolver = "How do I get the value of this field?"
+const resolvers = {
+  Post: {
+    comment: (parent, args, context, info) => {
+      console.log("comment resolver", parent);
+      return "Hello";
+    },
+  },
+};
 
 
 

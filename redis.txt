@@ -182,7 +182,7 @@ for this sequentical architecture: here we made different streams as all are dep
                   │ POST /order
                   ↓
           ┌──────────────────┐
-          │   Order Service   │
+          │   Order Service  │
           └────────┬─────────┘
                   │
       ┌───────────┴───────────┐

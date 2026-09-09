@@ -1,0 +1,178 @@
+Agile:
+Agile is a way of
+1. developing software in small steps
+2. getting feedback
+3. making improvements regularly
+
+Ways to implement Agile:
+1. Scrum : Scrum is generally more commonly used for software development, especially when teams work on planned features in iterations.
+2. Kanban : Kanban is very common when work comes continuously, such as support, maintenance, and bug fixing.
+
+Agile = philosophy/principles
+Scrum/Kanban = framework/practical process
+
+
+
+=> Scrum:
+Scrum is a framework used to implement Agile development.
+
+Product Backlog: A prioritized list of everything that may be required in the product.
+Example: 
+Product Backlog
+├── User Authentication
+├── Payment Integration
+├── Product Search
+├── Order Management
+└── Notification System
+The Product Owner generally prioritizes it.
+
+Sprint: 
+A fixed time period during which the team works on selected backlog items.
+Usually: 1–4 weeks. Many teams use 2-week sprints.
+At the end of the sprint, the goal is to have a potentially releasable increment.
+
+Sprint Backlog:
+The items selected from the Product Backlog for the current sprint, along with the plan/tasks needed to accomplish them.
+Product Backlog = everything we may build
+Sprint Backlog = what we decided to work on this sprint
+
+User Story:
+A requirement written from the user's perspective.
+As a customer, I want to reset my password so that I can regain access to my account.
+
+Acceptance Criteria: 
+Conditions that must be satisfied for the story to be considered complete.
+
+Scrum Roles:
+1. Product Owner:
+Product requirements
+Prioritizing Product Backlog
+Maximizing product value
+Clarifying requirements
+2. Scrum Master
+Facilitating Scrum
+Removing impediments
+Helping the team follow Scrum
+Supporting continuous improvement
+3. Developers
+Designing
+Coding
+Testing
+Reviewing
+Delivering the increment
+
+
+Scrum Ceremonies / Events:
+
+1. Sprint Planning:
+At the beginning of the sprint.
+Team discusses:
+What should we build?
+What is the Sprint Goal?
+How much work can we realistically take?
+How will we implement it?
+Output: Sprint Goal + Sprint Backlog
+
+2. Daily Scrum / Stand-up
+Usually 15 minutes.
+Traditionally people discuss:
+- What did I complete?
+- What will I work on?
+- Is anything blocking me?
+"The purpose is to inspect progress toward the Sprint Goal and identify any impediments or necessary adjustments."
+
+3. Sprint Review
+At the end of the sprint.
+The team demonstrates the completed increment to stakeholders/Product Owner and receives feedback.
+Important: Review = product/demo + feedback
+
+4. Sprint Retrospective
+Team discusses how the sprint went and how they can improve.
+What went well?
+What didn't go well?
+What should we improve?
+
+5. Backlog Refinement
+This is commonly used in real-world Scrum teams.
+Team discusses upcoming backlog items:
+Clarify requirements
+Break large stories
+Identify dependencies
+Add acceptance criteria
+Estimate stories
+Re-prioritize if needed
+It helps make stories ready for future sprints.
+
+
+Story Points:
+Story Points are given to a User Story to estimate how much effort, complexity, and difficulty it has.
+Story points are a relative estimation of the effort/complexity required for a story.
+They generally consider:
+Complexity
++ Effort
++ Uncertainty
++ Dependencies
+Suppose:
+Add login API          → 3 points
+Add payment gateway    → 8 points
+Build notification     → 5 points
+Payment isn't necessarily "8 times the work" of login. It's a relative estimate.
+
+
+Velocity:
+Velocity is the amount of work, usually measured in story points, that a team completes in a sprint.
+Can we compare the velocity of two teams?
+Not reliably. Story points are relative to each team, so Team A's 30 points may represent very different work from Team B's 30 points
+
+
+Sprint Goal:
+A Sprint Goal is the main objective of the sprint.
+Example: "Enable customers to complete the basic checkout process."
+
+
+Epic → Story → Task:
+EPIC
+└── E-commerce Checkout
+    ├── STORY
+    │   └── Customer can add products to cart
+    │      ├── TASK
+    │      ├── Create cart API
+    │      ├── Create DB schema
+    │      └── Add validation
+    ├── STORY
+    │   └── Customer can make payment
+    └── STORY
+        └── Customer receives order confirmation
+Epic : Large business requirement.
+User Story: Small piece of functionality providing user/business value.
+Task: Technical work required to implement the story.
+Story Points belong to the User Story, not the task.
+Product backlog is parent of the epic
+
+
+What Happens During a Sprint?
+At the beginning of the sprint, we conduct sprint planning and select prioritized stories from the product backlog based on the team's capacity and the sprint goal. During the sprint, developers work on those stories, participate in daily stand-ups, code reviews and testing, and raise blockers when needed. Toward the end, we conduct a sprint review to demonstrate the completed work and gather feedback, followed by a retrospective to discuss what went well and what we can improve in the next sprint.
+
+
+Questions:
+
+1. What was your role in Agile?
+As a developer, I was involved in sprint planning, estimation, daily stand-ups, development, code reviews, testing and sprint reviews. I also discussed technical feasibility and dependencies with the team and raised blockers whenever I encountered them."
+
+2. How do you estimate your work?
+We generally used story points for estimation. During planning, we discussed the complexity, effort, dependencies and uncertainty involved in a story. If there were significant differences between estimates, we discussed the reasoning and then reached a team consensus.
+
+3. What happens if you realize a story is bigger than expected?
+I would raise it as early as possible rather than waiting until the end of the sprint. I would discuss the issue with the team and Product Owner, understand whether we can split the story, reduce scope while maintaining the Sprint Goal, or move part of the work to a future sprint.
+
+4. What happens if a requirement changes during the sprint?
+First, we understand the impact and urgency of the change. If it's critical, we discuss it with the Product Owner and team and decide whether the current sprint scope needs to be adjusted. Otherwise, we add it to the Product Backlog and prioritize it for a future sprint
+
+5. Suppose you're working on a sprint and suddenly a critical production bug comes. What do you do?
+First, I would assess the severity and business impact. If it's critical, we prioritize fixing it rather than blindly continuing the planned work. I would communicate the impact to the team and Product Owner, adjust the sprint scope if necessary, fix and test the issue, and then discuss the root cause and preventive action during the retrospective
+
+6. What happens if you don't finish a story in the sprint?
+We don't mark it as Done. We discuss why it wasn't completed, for example unexpected complexity, dependency or unclear requirements. If the remaining work is still valuable, the Product Owner can prioritize it for a future sprint. We also use the retrospective to identify how to avoid the same problem. 
+
+7. Developer Is Blocked
+I would first try to resolve the blocker myself if possible. If it depends on another team, environment, requirement or external service, I would raise it during the daily Scrum or immediately with the relevant person rather than waiting. The goal is to remove the blocker as early as possible so it doesn't affect the Sprint Goal.

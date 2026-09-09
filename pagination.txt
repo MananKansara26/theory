@@ -1,0 +1,21 @@
+1. offset based pagination:
+
+
+2. Cusror based pagination:
+With offset-based pagination, if records are inserted or deleted while the user is navigating pages, the offset can shift and cause duplicate or missing records. For frequently changing data, I prefer cursor-based pagination because the cursor points to a specific position in the dataset. I also use a stable sort, usually created_at plus a unique id, so updates or new records don't disturb the pagination.
+
+Cursor pagination doesn't require an index, but to make it efficient, the cursor and sorting columns should ideally be indexed. For example, if I paginate using created_at and id, I would use a composite index on (created_at, id). This allows the database to efficiently find the records after the cursor instead of scanning the whole table.
+
+Cant use this if we want to implement like: Go to page 50
+
+
+
+=> How do you paginate millions of records?
+Prefer cursor/keyset pagination.
+Proper indexes.
+Avoid large OFFSET.
+Return only required columns.
+Use reasonable page sizes.
+
+=> How to manage recrods count for the pagination? i requested on page and i got document count then for subsequent requests do i still need to get the total documents?
+I don't necessarily calculate the total count on every pagination request. If the UI requires an exact total, I can run a count query, but that adds database overhead and the value can become stale when data changes. For cursor-based pagination, I generally return hasNextPage and nextCursor instead of total count. If the business requires the total count, I would calculate it separately or use a cached/approximate count depending on the use case.
