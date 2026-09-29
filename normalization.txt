@@ -1,0 +1,240 @@
+Normalization is used for schema refinement
+
+Normalization is the process of organizing the data in the database.
+It is performed to reduce the latency in a database
+
+A database anomaly is an error in the database that occurs because of data redundancy. Here is some anomalies.
+
+1. Insertion anomalies:
+An insertion anomaly happens when we cannot add new information to a database without also adding some unnecessary information.
+Example: 
+| student_id | student_name | course_id | course_name |
+| ---------- | ------------ | --------- | ----------- |
+| 1          | Rahul        | C101      | Node.js     |
+| 2          | Amit         | C102      | React       |
+we want to add a new course C103 = GraphQL, but no student has enrolled yet.
+With this table, we cannot naturally insert. because student_id and student_name are also expected. So, course information depends on student information being present.
+
+2. Updation anomalies:
+An update anomaly occurs when the same piece of information is stored in multiple places and updating only some copies causes inconsistent data.
+Example:
+| student_id | student_name | course_id | course_name | instructor |
+| ---------- | ------------ | --------- | ----------- | ---------- |
+| 1          | Rahul        | C101      | Node.js     | Amit       |
+| 2          | Priya        | C101      | Node.js     | Amit       |
+| 3          | Jay          | C101      | Node.js     | Amit       |
+Suppose instructor Amit changes to Raj. Because the instructor is repeated three times, we need to update.
+If we update only two rows. Now the database contains conflicting information.
+
+3. Deletion anomalies:
+A deletion anomaly occurs when deleting one piece of information unintentionally causes another important piece of information to be lost.
+Example:
+| student_id | student_name | course_id | course_name |
+| ---------- | ------------ | --------- | ----------- |
+| 1          | Rahul        | C101      | Node.js     |
+| 2          | Amit         | C101      | Node.js     |
+| 3          | Priya        | C102      | React       |
+Suppose Rahul and Amit leave the course. Now ther ewill be no couse named Node.js
+We didn't intend to delete the course, but because course and enrollment information are stored together, we lost it.
+
+
+Advantages:
+Minimizing data redundancy
+Data consistency
+Integrity
+
+Disadvantages:
+Performance descreases when normalizing the table to higher normal form i.e. 4NF, 5NF
+1NF disallows the multivalued attributes
+
+
+Candidate key:
+a candidate key is a column, or combination of columns, that can uniquely identify every row in a table.
+A table can have multiple candidate keys, but only one primary key.
+Candidate key = a minimal set of columns that uniquely identifies a row.
+
+
+
+Functional Dependency:
+| student_id | student_name |
+| ---------- | ------------ |
+| 1          | Rahul        |
+| 2          | Amit         |
+| 3          | Priya        |
+
+We can say: student_id → student_name 
+student_id determines student_name
+The left side is called the determinant.
+The right side is called the dependent attribute.
+
+student_id → student_name
+     ↑                ↑
+determinant       dependent
+
+Because if I know the student_id, I can uniquely find the student's name.
+student_id = 1
+        ↓
+student_name = Rahul
+
+if student_id → student_name, it does not necessarily mean: student_name → student_id
+Because two students could potentially have the same name.
+
+| student_id | student_name |
+| ---------- | ------------ |
+| 1          | Rahul        |
+| 2          | Rahul        |
+Knowing student_name = Rahul doesn't tell us which student it is.
+
+student_id → student_name ✅
+student_name → student_id ❌
+
+
+
+1NF:
+Rule: Every column should contain atomic/single values.
+
+| student_id | student_name | courses                 |
+| ---------- | ------------ | ----------------------- |
+| 1          | Rahul        | Node.js, React, GraphQL |
+| 2          | Amit         | Node.js, MongoDB        |
+
+The courses column contains multiple values. That's a violation of 1NF.
+
+Convert it to 1NF
+| student_id | student_name | course  |
+| ---------- | ------------ | ------- |
+| 1          | Rahul        | Node.js |
+| 1          | Rahul        | React   |
+| 1          | Rahul        | GraphQL |
+| 2          | Amit         | Node.js |
+| 2          | Amit         | MongoDB |
+
+
+
+2NF:
+Rule:
+1.Already be in 1NF
+2.Have no partial dependency
+
+Does every non-key column depend on the entire primary key?
+
+| student_id | course_id | student_name | course_name | marks |
+| ---------- | --------- | ------------ | ----------- | ----- |
+| 1          | C101      | Rahul        | Node.js     | 80    |
+| 1          | C102      | Rahul        | React       | 90    |
+| 2          | C101      | Amit         | Node.js     | 75    |
+
+primary key: (student_id, course_id)
+This is a composite key because we need both values to uniquely identify an enrollment.
+
+student_id → student_name
+course_id → course_name
+
+(student_id, course_id) → marks
+
+student_id + course_id
+        ↓
+      marks       ✅
+
+student_id
+    ↓
+student_name     ❌
+
+course_id
+    ↓
+course_name      ❌
+
+
+How do we fix it? Split the table.
+
+| student_id | student_name |
+| ---------- | ------------ |
+| 1          | Rahul        |
+| 2          | Amit         |
+
+| course_id | course_name |
+| --------- | ----------- |
+| C101      | Node.js     |
+| C102      | React       |
+
+| student_id | course_id | marks |
+| ---------- | --------- | ----- |
+| 1          | C101      | 80    |
+| 1          | C102      | 90    |
+| 2          | C101      | 75    |
+
+Now:
+student_id → student_name
+course_id → course_name
+student_id + course_id → marks
+
+2NF mainly matters when you have a composite primary key.
+
+2NF means the table must be in 1NF and every non-key attribute must depend on the entire primary key, not just a part of a composite key.
+
+3NF:
+
+| student_id | student_name | department_id | department_name  |
+| ---------- | ------------ | ------------- | ---------------- |
+| 1          | Rahul        | D01           | Computer Science |
+| 2          | Amit         | D02           | Mechanical       |
+| 3          | Priya        | D01           | Computer Science |
+
+Primary key: student_id
+
+Now look at the dependencies:
+student_id → department_id
+department_id → department_name
+
+Therefore: student_id → department_id → department_name
+
+department_name doesn't directly depend on student_id. It depends on department_id. That's transitive dependency.
+
+| student_id | student_name | department_id |
+| ---------- | ------------ | ------------- |
+| 1          | Rahul        | D01           |
+| 2          | Amit         | D02           |
+| 3          | Priya        | D01           |
+
+| department_id | department_name  |
+| ------------- | ---------------- |
+| D01           | Computer Science |
+| D02           | Mechanical       |
+
+Now:
+student_id → department_id
+department_id → department_name
+
+3NF means the table must be in 2NF and non-key attributes should not depend on other non-key attributes.
+
+
+BCNF:
+BCNF is basically a stronger version of 3NF.
+A table is in BCNF if every determinant is a candidate key. 
+
+Student	Subject	Teacher
+Rahul	DBMS	Mr. Amit
+Priya	DBMS	Mr. Amit
+Rahul	Java	Mr. Raj
+Amit	Java	Mr. Raj
+
+Here, Subject → Teacher means that each subject has one teacher.
+The problem is that Subject is not a candidate key for the whole table because many students can take the same subject.
+Therefore, this table violates BCNF.
+
+How do we fix it?
+
+Student	Subject
+Rahul	DBMS
+Priya	DBMS
+Rahul	Java
+Amit	Java
+
+Subject	Teacher
+DBMS	Mr. Amit
+Java	Mr. Raj
+
+Now, Subject → Teacher. So the tables satisfy BCNF.
+
+
+

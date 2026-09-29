@@ -1,0 +1,186 @@
+Rabbit MQ:
+Destructive Consumption
+example: envelop -> postman -> mailbox -> trash can
+
+Its a smart broker -> routing intelligence
+
+Its a push based model
+
+request response model
+
+single consumers
+
+moderate scale (10k-100k msg/sec)
+
+Lower infra
+
+Lower latency
+
+Kafka:
+Retention, consumption, replayability
+mobile -> whatsapp
+
+Its a pull based model -> consumer requests data
+
+Its a dump broker
+
+publish and subscribe model
+
+multiple consumers
+
+massive scale (1M + msg/sec)
+
+higher infra
+
+high througput
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Kafka architecture:
+
+basic architecture
+Producer
+   |
+   |  message
+   ↓
+ Kafka
+   |
+   ↓
+Consumer
+
+example
+Order Service
+     |
+     | "Order #123 created"
+     ↓
+   Kafka
+     |
+     ├──→ Payment Service
+     ├──→ Notification Service
+     └──→ Analytics Service
+
+The important Kafka components are:
+Producer → sends messages
+Topic → category where messages are stored
+Partition → divides a topic for scalability
+Broker → Kafka server that stores messages
+Consumer → reads messages
+Consumer Group → group of consumers working together
+Offset → position of a message in a partition
+
+
+A topic is like a named container/category for messages.
+orders
+payments
+notifications
+user-events
+Above are topics
+
+A topic can be divided into partitions. Why? Scalability.
+orders topic
+Partition 0:  [M1] [M4] [M7] [M10]
+Partition 1:  [M2] [M5] [M8] [M11]
+Partition 2:  [M3] [M6] [M9] [M12]
+Partition = smaller pieces of a topic
+
+Suppose you have 1 million messages.
+Instead of one Kafka server/process handling everything:
+1 partition
+     ↓
+1 million messages
+you can distribute them:
+Partition 0 → 330k
+Partition 1 → 330k
+Partition 2 → 340k
+
+
+A broker is simply a Kafka server.
+Kafka Cluster
+Broker 1
+Broker 2
+Broker 3
+Partitions are distributed across brokers.
+Broker = Kafka server
+
+Broker is a server.
+Partitions are stored on brokers.
+
+One broker can store many partitions. This is actually very common.
+
+Topic = orders
+Partitions = 3
+Brokers = 3
+
+          orders topic
+              │
+    ┌──────────┼──────────┐
+    ↓          ↓          ↓
+Part 0      Part 1     Part 2
+    │          │          │
+    ↓          ↓          ↓
+Broker 1    Broker 2    Broker 3
+
+Kafka Cluster
+│
+├── Broker 1
+│   ├── orders-P0  ← LEADER
+│   ├── orders-P2  ← LEADER
+│   ├── payments-P1 ← FOLLOWER
+│   └── users-P0    ← LEADER
+│
+├── Broker 2
+│   ├── orders-P1  ← LEADER
+│   ├── payments-P0 ← LEADER
+│   └── users-P0    ← FOLLOWER
+│
+└── Broker 3
+    ├── orders-P0  ← FOLLOWER
+    ├── orders-P1  ← FOLLOWER
+    └── payments-P1 ← LEADER
+
+Broker = physical/server machine
+Partition = data unit stored on that machine
+
+
+
+Consumer pulls from whom?
+
+The consumer pulls messages from a partition.
+But technically it communicates with the broker that is hosting that partition.
+
+Partition 0
+    ↓
+Broker 1
+
+Consumer asks Broker 1: "Give me messages from Partition 0 starting from offset 100."
+
+Broker 1 sends them.
+
+Consumer
+    │
+    │ Give me messages
+    ↓
+Broker 1
+    │
+    ↓
+Partition 0
+So the consumer does not randomly ask brokers: ❌ Consumer → Give me any job
+Instead: ✅ Consumer → I need messages from my assigned partition
+
+But who decides which partition the consumer reads?
+Consumer Group + Kafka's partition assignment mechanism.
+
+Kafka stores each partition as an append-only log on the broker's disk.

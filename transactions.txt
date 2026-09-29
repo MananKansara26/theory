@@ -1,0 +1,280 @@
+COMMIT: Save all changes permanently.
+ROLLBACK: Undo all changes made inside this transaction.
+
+BEGIN;
+-- Query 1
+UPDATE accounts
+SET balance = balance - 1000
+WHERE id = 1;
+-- Query 2
+UPDATE accounts
+SET balance = balance + 1000
+WHERE id = 2;
+COMMIT;
+
+All changes between BEGIN and ROLLBACK are discarded. All changes between BEGIN and COMMIT are saved.
+
+The database's transaction system is designed to provide ACID properties by default. You don't manually implement ACID from scratch.
+However, how well your application gets those guarantees depends on how you use transactions and what the database supports/configuration allows.
+
+SAVEPOINT: A savepoint lets you partially roll back a transaction.
+
+BEGIN;
+UPDATE accounts
+SET balance = balance - 1000
+WHERE id = 1;
+SAVEPOINT transfer_point;
+UPDATE accounts
+SET balance = balance + 1000
+WHERE id = 2;
+ROLLBACK TO transfer_point;
+COMMIT;
+
+ROLLBACK → entire transaction is undone.
+ROLLBACK TO SAVEPOINT transfer_point;
+→ only changes after that savepoint are undone.
+
+
+=> Concurrency problem:
+What happens when multiple users/requests execute transactions at the same time?
+
+Transaction A                  Transaction B
+Read balance = 5000            Read balance = 5000
+Withdraw 3000                  Withdraw 4000
+Balance = 2000                 Balance = 1000
+Both transactions read the same initial value. Now we have a concurrency problem.
+
+This leads to:
+Dirty reads
+Non-repeatable reads
+Phantom reads
+Lost updates
+Isolation levels
+Locks
+MVCC
+Deadlocks
+
+
+=> Isolation Levels
+It determines the degree to which the operation in one transaction are isolated from those in other transaction
+
+There are three anomalies:
+
+1.Dirty Read: 
+Reading uncommitted data from another transaction
+
+Initial: A = 100
+T1                  T2
+-------------------------
+W(A = 200)
+                    R(A = 200)
+W(A = 300)
+ROLLBACK
+
+1. T1 changes A from 100 → 200
+2. T1 has NOT committed yet
+3. T2 reads A = 200
+4. T1 rolls back
+5. Actual value of A becomes 100 again
+T2 read data that was never committed → DIRTY READ
+
+2. Non-repeatable read:
+Data changes after it has been read within the same transaction
+
+Initial: A = 100
+T1                  T2
+-------------------------
+R(A = 100)
+                    W(A = 200)
+                    COMMIT
+R(A = 200)
+
+1. T1 reads A = 100
+2. T2 changes A from 100 → 200
+3. T2 commits
+4. T1 reads A again
+5. T1 now gets A = 200
+
+Same transaction (T1)
+Same data (A)
+Different value → NON-REPEATABLE READ
+
+3. Phantom read:
+A phantom read happens when a transaction runs the same query twice, but the second query returns new or missing rows because another transaction inserted or deleted rows in between.
+
+Initial accounts:
+ID    Balance
+1     500
+2     1500
+3     2000
+
+T1                          T2
+-----------------------------------------
+R(balance > 1000)
+→ 2 rows (ID 2, 3)
+                            INSERT ID 4
+                            balance = 3000
+                            COMMIT
+R(balance > 1000)
+→ 3 rows (ID 2, 3, 4)
+
+1. T1 queries: balance > 1000
+2. T1 gets rows 2 and 3
+3. T2 inserts a new row (ID 4) satisfying the same condition
+4. T2 commits
+5. T1 runs the same query again
+6. T1 now gets rows 2, 3, and 4
+A new matching row appeared → PHANTOM READ
+
+Dirty read          → Reading uncommitted data
+Non-repeatable read → Same ROW, different VALUE
+Phantom read        → Same QUERY, different ROWS
+
+
+SQL databases generally provide four standard isolation levels:
+READ UNCOMMITTED
+READ COMMITTED
+REPEATABLE READ
+SERIALIZABLE  
+Think of them as increasing levels of protection against concurrency problems.
+
+PostgreSQL doesn't actually allow dirty reads even if READ UNCOMMITTED is requested; it behaves like READ COMMITTED.
+
+READ UNCOMMITTED
+----------------
+A transaction can read data that another transaction has not committed yet.
+
+READ COMMITTED
+--------------
+A transaction can only read data that has been committed.
+
+REPEATABLE READ
+---------------
+If a transaction reads the same data multiple times, it gets the same value.
+
+Standard SQL says: REPEATABLE READ does not necessarily have to prevent phantom reads.
+
+PostgreSQL: Actually prevents phantom reads at REPEATABLE READ, going beyond what the SQL standard requires.
+Postgres's REPEATABLE READ takes a snapshot of the database as of the start of the transaction (first statement, actually).
+Every query in that transaction — including re-run queries with WHERE clauses — only sees rows as they existed in that snapshot.
+So even if T2 inserts and commits a new "active" row, T1's re-run query won't see it. No phantoms.
+Postgres essentially merges what other systems separate: no dirty reads, no non-repeatable reads, no phantom reads — all from one snapshot mechanism (true snapshot isolation, though not identical to SERIALIZABLE, since write skew is still possible).
+
+MySQL (InnoDB): REPEATABLE READ blocks most phantoms too, but the mechanism and coverage differ:
+InnoDB uses MVCC + a snapshot for plain SELECTs (consistent nonlocking read), similar in spirit to Postgres — so a plain re-run SELECT generally won't show T2's new committed row either.
+BUT: InnoDB also uses next-key locking (gap locks + record locks) for locking reads (SELECT ... FOR UPDATE, SELECT ... FOR SHARE) and for UPDATE/DELETE. These gap locks specifically exist to physically block other transactions from inserting into the range T1 queried — a stronger, lock-based defense against phantoms for these statement types.
+The catch: pure non-locking SELECTs rely on the snapshot (like Postgres), but there are documented edge cases in MySQL docs (e.g., a SELECT inside a transaction followed by an UPDATE that matches newly-inserted rows) where phantom-like behavior can still surface, because the read-view snapshot and the locking behavior aren't perfectly unified the way Postgres's snapshot isolation is.
+
+SERIALIZABLE
+------------
+Transactions behave as if they are executed one after another, preventing them from interfering with each other.
+Serializable transactions can fail due to concurrency conflicts. Your application may need to retry the transaction.
+
+
+Isolation Level	Dirty Read	Non-Repeatable Read	Phantom Read
+READ UNCOMMITTED	❌ Possible	❌ Possible	❌ Possible
+READ COMMITTED	✅ Prevented	❌ Possible	❌ Possible
+REPEATABLE READ	✅ Prevented	✅ Prevented	⚠️ Depends on database
+SERIALIZABLE	✅ Prevented	✅ Prevented	✅ Prevented
+
+
+what is mvcc?
+
+
+
+FOR UPDATE: locks the selected row.
+"I'm going to work with this row, so protect it from conflicting updates until my transaction finishes."
+BEGIN;
+SELECT *
+FROM accounts
+WHERE id = 1
+FOR UPDATE; // locks the selected row.
+UPDATE accounts
+SET balance = balance - 1000
+WHERE id = 1;
+COMMIT;
+
+
+FOR UPDATE SKIP LOCKED: 
+if worker A and B executes the same query and if worker A has locked job 1, worker B skips it and gets job 2.
+
+
+How to Prevent Deadlocks:
+Acquire locks in a consistent order.
+
+Bad:
+Transaction A:
+1 → 2
+Transaction B:
+2 → 1
+
+Better:
+Transaction A:
+1 → 2
+Transaction B:
+1 → 2
+
+
+Transaction Boundary:
+Where should a transaction start and end?
+
+Bad:
+BEGIN
+DB query
+API call
+External payment API
+Send email
+Wait 5 seconds
+Another DB query
+COMMIT
+This keeps the database transaction open for too long.
+
+
+Better:
+Validate request
+BEGIN
+    DB operations
+COMMIT
+External operations
+
+
+
+
+
+
+check this case for repeateble read:
+t1    T2
+r()   w()
+r()   commit
+update() 
+
+
+
+
+
+
+
+
+
+FOR UPDATE: 
+when you intend to update or delete the selected rows.
+The important point is that the lock exists within the transaction.
+
+BEGIN;
+
+SELECT balance
+FROM accounts
+WHERE id = 1
+FOR UPDATE;
+
+if any query want to update the same row before commit/rollback then it will wait untill commit/rollback. 
+
+UPDATE accounts
+SET balance = balance - 2000
+WHERE id = 1;
+
+COMMIT;
+
+
+if any query
+

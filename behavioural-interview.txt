@@ -97,9 +97,7 @@ Share knowledge and best practices with the team.
 Take more responsibility for delivery and quality.
 Become someone the team can rely on for technical decisions.
 Grow into a technical leadership role naturally.
-Strong closing:
-
-"I don't have a fixed title in mind. My goal is to become a strong engineer who can own a problem end-to-end, make good technical decisions, and help the team deliver successfully."
+Strong closing: "I don't have a fixed title in mind. My goal is to become a strong engineer who can own a problem end-to-end, make good technical decisions, and help the team deliver successfully."
 
 
 => What are your strengths?

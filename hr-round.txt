@@ -73,12 +73,11 @@ i want to prepare for the behavioral round. i have 4 years of experience and i w
 
 => how you handle the confilct with your client and proejct manager?
 
-1. In my one of the proejct i had conflict with the client. he has given me the requirement with the deadline. while working on the feature he started adding the things requirement and as a result i was not able to achieve the goal. so i told him that it was due to the requirement increment.
+1. In one of my projects, I had a situation where the client provided a requirement with a specific deadline. While working on the feature, some additional requirements were introduced, which increased the scope and affected the timeline. I communicated this to the client and explained that the additional requirements were impacting the original delivery goal. Then I worked on the reqirements which were urgent and moved non-essential things to next scope.
 
 2. when i was designing the requestweed, i was at the initial level of the development of the features. that time my manager was pressuring to complete the feature very fast. but i informed that its the initial stage of proejct so i need to make the code maintable for future, scalalble.. onece the setup will be done then the development of the feature will be done very fast. but if i dont write the proper code right now then it will impact the quality of code in the inital stage of the development which is bad idea than meeting the deadline.
 
-3. at healthray, one hospital wants a different features then the actual production... but that hospital was paying much. so my company decided to make new branch for that org and code different for that hospitals... but i denied them as creating new branch for hospital who is paying more is not good. it will be hard in future to maintain the code. but would be the solution of that i dont know so please let me know
-
+3. At Healthray, we had a situation where one hospital needed some features that were different from our standard production behavior. Since that hospital was a high-value client, the initial approach was to create a separate branch and maintain customized code for them. I had a different opinion because I felt that maintaining a separate branch could increase technical debt and make future maintenance and deployments more difficult. I discussed my concern with the team and suggested that we could handle the differences through tenant-specific configurations or feature flags instead. This would allow us to support the client without creating a completely separate codebase.
 
 => when you showed the Leadership skills:
 
@@ -96,4 +95,4 @@ If i think that there would be delay in my task due to some blockers then i will
 
 1. at the inital phase of my carreer i made one mistake on server. there was a local changes someone made on server and i nneded to deploy the task on urgent basis. That time i only had a baisc kowledge of the git. So when i was taking the pull on the server side it was shwoing need to removed local changes. from stack overflow i got command to reset the local changes. so i used that command and removed the changes and made the deployment. So the changes from the server got vanished. so that time i realize that to work with server i need to learn commands, specially  in git, understand the commands before applying them direclty, and the best practice for the version control. then i started doing everything with command specially with git
 
-2. early on,when started ai to speed things up. i relied too much on generated code and didnt fully reivied the logic. testing showed some edge case were missed. i fixed the issues, added more thora testing and code reviees. i leanred to treat the ai as a tool not a replacement. not relie blindly
+2. early on,when started ai to speed things up. i relied too much on generated code and didnt fully reivied the logic. testing showed some edge case were missed. i fixed the issues, added more thoral testing and code reviees. i leanred to treat the ai as a tool not a replacement. not relie blindly

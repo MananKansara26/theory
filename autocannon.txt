@@ -1,0 +1,46 @@
+-c → Connections
+-c means number of concurrent connections.
+autocannon -c 100 http://localhost:3000 => Keep up to 100 HTTP connections active at the same time.
+100 connections does NOT necessarily mean exactly 100 requests per second. Each connection can make multiple requests depending on how quickly your server responds.
+
+-w → Workers
+-w means number of worker(autocannon worker not cpu worker) processes used by Autocannon itself.
+autocannon -c 100 -w 4 http://localhost:3000
+          Autocannon
+              │
+  ┌──────────┼──────────┐
+  ↓          ↓          ↓
+Worker 1   Worker 2   Worker 3 ... Worker 4
+  │          │          │
+  └──────────┼──────────┘
+              ↓
+        Your Node API
+This is useful when generating a large amount of load, because the load generator itself can otherwise become the bottleneck.
+
+-p → Pipelining
+-p means HTTP pipelining factor — how many requests can be sent without waiting for the previous response.
+autocannon -c 10 -p 5 http://localhost:3000
+Conceptually:
+Connection 1
+Request 1 ────────→
+Request 2 ────────→
+Request 3 ────────→
+Request 4 ────────→
+Request 5 ────────→
+        ↓
+Server processes them
+Without pipelining:
+Request 1 → Response 1
+Request 2 → Response 2
+Request 3 → Response 3
+
+
+If you're using: autocannon -c 100 -w 4
+you shouldn't assume that each worker handles exactly 25 connections.
+Conceptually, you can think of Autocannon distributing the workload across its workers, but the exact distribution/scheduling is an implementation detail.
+So it's safer to say: 100 concurrent connections are generated using 4 Autocannon workers.
+Rather than: ❌ Each worker handles exactly 25 connections.
+If the distribution happens to be roughly even, it may look like ~25 each, but 25 is not a guaranteed rule.
+
+autocannon -c 6 -p 2 -w 2:
+how many requests server handling at any moment of time is -c x -p. here its 12 requests at any moment
